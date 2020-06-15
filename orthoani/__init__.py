@@ -69,10 +69,7 @@ def _chop(record: SeqRecord, dest: os.PathLike, blocksize: int) -> None:
 
 
 def _hits(
-    query: os.PathLike,
-    reference: os.PathLike,
-    blocksize: int = 1020,
-    threads: int = multiprocessing.cpu_count(),
+    query: os.PathLike, reference: os.PathLike, blocksize: int, threads: int,
 ) -> Dict[Tuple[str, str], float]:
     """Compute the hits from ``query`` to ``reference``.
     """
@@ -86,7 +83,7 @@ def _hits(
         penalty=-1,
         reward=1,
         num_alignments=1,
-        num_threads=4,
+        num_threads=threads,
         outfmt=5,
     )
     output = io.StringIO(cmd()[0])
@@ -105,21 +102,24 @@ def _hits(
     return identities
 
 
-def _orthoani(query: os.PathLike, reference: os.PathLike, blocksize: int) -> float:
+def _orthoani(
+    query: os.PathLike, reference: os.PathLike, blocksize: int, threads: int
+) -> float:
     """Compute the OrthoANI score for two chopped sequences.
 
     Arguments:
         query (`~os.PathLike`): The path to the chopped query.
         reference (`~os.PathLike`): The path to the chopped reference.
         blocksize (`int`): The size of the blocks used for computation.
+        threads (`int`): The number of threads to use to run ``blastn``.
 
     Caution:
-        This function expects that a BLASTn database has been created for both
-        of its inputs, next to the source FASTA file.
+        This function expects that a BLASTn database has been created for 
+        both of its inputs, next to the source FASTA file.
 
     """
-    forward = _hits(query, reference, blocksize=blocksize)
-    backward = _hits(reference, query, blocksize=blocksize)
+    forward = _hits(query, reference, blocksize=blocksize, threads=threads)
+    backward = _hits(reference, query, blocksize=blocksize, threads=threads)
     hits = {k: v for k, v in forward if (v, k) in backward}
 
     ani = 0.0
@@ -130,7 +130,12 @@ def _orthoani(query: os.PathLike, reference: os.PathLike, blocksize: int) -> flo
     return ani
 
 
-def orthoani(reference: SeqRecord, query: SeqRecord, blocksize: int = 1020,) -> float:
+def orthoani(
+    reference: SeqRecord,
+    query: SeqRecord,
+    blocksize: int = 1020,
+    threads: int = multiprocessing.cpu_count(),
+) -> float:
     """Compute the OrthoANI score for two sequence records.
 
     Arguments:
@@ -138,6 +143,8 @@ def orthoani(reference: SeqRecord, query: SeqRecord, blocksize: int = 1020,) -> 
         query (`~Bio.SeqRecord.SeqRecord`): The second record to process.
         blocksize (`int`): The size of blocks to use for computation. Defaults
             to *1020bp*, the size used in the OrthoANI reference paper.
+        threads (`int`): The number of threads to use to run ``blastn``.
+            Defaults to number of CPUs.
 
     Returns:
         `float`: The OrthoANI score as a floating-point number between 0 and 1.
@@ -158,11 +165,13 @@ def orthoani(reference: SeqRecord, query: SeqRecord, blocksize: int = 1020,) -> 
         _chop(query, chopped_q, blocksize=blocksize)
         ctx << _database(chopped_q)
         # return the orthoani score
-        return _orthoani(chopped_q, chopped_r, blocksize)
+        return _orthoani(chopped_q, chopped_r, blocksize, threads)
 
 
 def orthoani_pairwise(
-    genomes: List[SeqRecord], blocksize: int = 1020
+    genomes: List[SeqRecord],
+    blocksize: int = 1020,
+    threads: int = multiprocessing.cpu_count(),
 ) -> Dict[Tuple[str, str], float]:
     """Compute pairwise OrthoANI scores for a list of sequence records.
 
@@ -173,6 +182,8 @@ def orthoani_pairwise(
         genomes (`list` of `~Bio.SeqRecord.SeqRecord`): The records to process.
         blocksize (`int`): The size of blocks to use for computation. Defaults
             to *1020bp*, the size used in the OrthoANI reference paper.
+        threads (`int`): The number of threads to use to run ``blastn``.
+            Defaults to number of CPUs.
 
     Returns:
         `dict`: A dictionary that maps the OrthoANI score to a pair of
@@ -191,7 +202,7 @@ def orthoani_pairwise(
         for i, g1 in enumerate(genomes):
             results[g1.id, g1.id] = 1.0
             for g2 in genomes[i + 1 :]:
-                ani = _orthoani(chopped[g1.id], chopped[g2.id], blocksize=blocksize)
+                ani = _orthoani(chopped[g1.id], chopped[g2.id], blocksize, threads)
                 results[g1.id, g2.id] = results[g2.id, g1.id] = ani
         # return the orthoani score for each pair
         return results
