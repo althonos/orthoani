@@ -12,7 +12,6 @@ import orthoani
 
 
 class TestCli(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         cls.data = pathlib.Path(__file__).parent / "data"

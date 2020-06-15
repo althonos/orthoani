@@ -98,18 +98,14 @@ def _hits(
             if all(hsp.align_length > 0.35 * blocksize for hsp in hsps):
                 q = record.query
                 r = record.alignments[0].hit_def
-                identities[q, r] = (
-                    sum(hsp.identities / hsp.align_length for hsp in hsps) / len(hsps)
-                )
+                identities[q, r] = sum(
+                    hsp.identities / hsp.align_length for hsp in hsps
+                ) / len(hsps)
 
     return identities
 
 
-def _orthoani(
-    query:  os.PathLike,
-    reference:  os.PathLike,
-    blocksize: int
-) -> float:
+def _orthoani(query: os.PathLike, reference: os.PathLike, blocksize: int) -> float:
     """Compute the OrthoANI score for two chopped sequences.
 
     Arguments:
@@ -134,11 +130,7 @@ def _orthoani(
     return ani
 
 
-def orthoani(
-    reference: SeqRecord,
-    query: SeqRecord,
-    blocksize: int = 1020,
-) -> float:
+def orthoani(reference: SeqRecord, query: SeqRecord, blocksize: int = 1020,) -> float:
     """Compute the OrthoANI score for two sequence records.
 
     Arguments:
@@ -170,8 +162,7 @@ def orthoani(
 
 
 def orthoani_pairwise(
-    genomes: List[SeqRecord],
-    blocksize: int = 1020
+    genomes: List[SeqRecord], blocksize: int = 1020
 ) -> Dict[Tuple[str, str], float]:
     """Compute pairwise OrthoANI scores for a list of sequence records.
 
@@ -199,7 +190,7 @@ def orthoani_pairwise(
         results = {}
         for i, g1 in enumerate(genomes):
             results[g1.id, g1.id] = 1.0
-            for g2 in genomes[i+1:]:
+            for g2 in genomes[i + 1 :]:
                 ani = _orthoani(chopped[g1.id], chopped[g2.id], blocksize=blocksize)
                 results[g1.id, g2.id] = results[g2.id, g1.id] = ani
         # return the orthoani score for each pair

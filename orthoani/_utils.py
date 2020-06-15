@@ -41,8 +41,8 @@ class BlockIterator(collections.abc.Iterator):
 
     def __next__(self):  # noqa: D105
         if len(self.data) > self.blocksize:
-            block = self.data[:self.blocksize]
-            self.data = self.data[self.blocksize:]
+            block = self.data[: self.blocksize]
+            self.data = self.data[self.blocksize :]
             return block
         raise StopIteration
 
