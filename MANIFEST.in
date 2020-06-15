@@ -1,0 +1,6 @@
+include orthoani/py.typed
+include orthoani/_version.txt
+include CHANGELOG.md 
+include README.md
+include pyproject.toml
+include MANIFEST.in

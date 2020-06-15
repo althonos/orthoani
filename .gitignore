@@ -12,6 +12,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+pyproject.toml
 .Python
 build/
 develop-eggs/
