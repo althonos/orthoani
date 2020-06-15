@@ -25,11 +25,9 @@ install:
 - pip install .
 
 script:
-- coverage run -p -m orthoani -q tests/data/*.FMIY01000001.fna -r tests/data/*.FMIY01000001.fna
-- coverage run -p -m orthoani -q tests/data/*.FMIY01000001.fna -r tests/data/*.FMIY01000002.fna
+- python -m coverage run -m unittest discover -bvv
 
 after_success:
-- coverage combine
 - coverage xml --include "orthoani/*"
 - codecov
 - python-codacy-coverage -r coverage.xml
