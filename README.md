@@ -67,16 +67,15 @@ $ python -m orthoani -q sequence1.fa -r sequence2.fa
 files, which is configurable through
 [`tempfile.tempdir`](https://docs.python.org/3/library/tempfile.html#tempfile.tempdir).
 On some systems (like ArchLinux), this filesystem can reside only in memory,
-which means that even
+which means that your computer could have trouble processing very large files.
+If this happens, try changing the value of the `tempfile.tempdir` to a directory
+that is actually on physical storage.
 
 
 ## 📜 About
 
 This library is provided under the open-source
 [MIT license](https://choosealicense.com/licenses/mit/).
-Please cite this library if you are using it in a scientific
-context using the following DOI:
-[**10.5281/zenodo.595572**](https://doi.org/10.5281/zenodo.595572)
 
 *This project is in no way not affiliated, sponsored, or otherwise endorsed by
 the original OrthoANI authors. It was developed by

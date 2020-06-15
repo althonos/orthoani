@@ -1,6 +1,8 @@
+"""Implementation of the OrthoANI algorithm for nucleotide identity measurement.
+"""
+
 import contextlib
 import io
-import typing
 import os
 import multiprocessing.pool
 from typing import Dict, List, Iterator, Tuple
@@ -26,7 +28,7 @@ __version__ = (
 
 @contextlib.contextmanager
 def _database(reference: os.PathLike) -> Iterator[None]:
-    """A context managing a database for the given reference genome.
+    """Get a context to manage a database for the given reference genome.
 
     The database is created when the context is entered, and deleted when it
     is exited.
@@ -34,6 +36,7 @@ def _database(reference: os.PathLike) -> Iterator[None]:
     Arguments:
         reference (`str`): The path to a FASTA file containing a chopped
             genome to build a database for.
+
     """
     try:
         MakeBlastDB(dbtype="nucl", input_file=os.fspath(reference))()
@@ -117,10 +120,11 @@ def _orthoani(
     Caution:
         This function expects that a BLASTn database has been created for both
         of its inputs, next to the source FASTA file.
+
     """
     forward = _hits(query, reference, blocksize=blocksize)
     backward = _hits(reference, query, blocksize=blocksize)
-    hits = { k:v for k,v in forward if (v,k) in backward }
+    hits = {k: v for k, v in forward if (v, k) in backward}
 
     ani = 0.0
     for hit_q, hit_r in hits.items():
@@ -135,6 +139,23 @@ def orthoani(
     query: SeqRecord,
     blocksize: int = 1020,
 ) -> float:
+    """Compute the OrthoANI score for two sequence records.
+
+    Arguments:
+        reference (`~Bio.SeqRecord.SeqRecord`): The first record to process.
+        query (`~Bio.SeqRecord.SeqRecord`): The second record to process.
+        blocksize (`int`): The size of blocks to use for computation. Defaults
+            to *1020bp*, the size used in the OrthoANI reference paper.
+
+    Returns:
+        `float`: The OrthoANI score as a floating-point number between 0 and 1.
+
+    Note:
+        ``reference`` and ``query`` can be exchanged, since OrthoANI is a
+        symmetric measurement. Names are only retained for consistency with
+        BLAST but bear no semantic value.
+
+    """
     with ExitStack() as ctx:
         # make the chopped file and the database for the first sequence
         chopped_r = ctx << temppath(suffix=".fa")
@@ -152,6 +173,21 @@ def orthoani_pairwise(
     genomes: List[SeqRecord],
     blocksize: int = 1020
 ) -> Dict[Tuple[str, str], float]:
+    """Compute pairwise OrthoANI scores for a list of sequence records.
+
+    Use this function instead of `orthoani.orthoani` to avoid chopping the
+    inputs and building the same BLAST database several times.
+
+    Arguments:
+        genomes (`list` of `~Bio.SeqRecord.SeqRecord`): The records to process.
+        blocksize (`int`): The size of blocks to use for computation. Defaults
+            to *1020bp*, the size used in the OrthoANI reference paper.
+
+    Returns:
+        `dict`: A dictionary that maps the OrthoANI score to a pair of
+        record identifiers.
+
+    """
     with ExitStack() as ctx:
         # chop all inputs and make databases to avoid redoing it for each pair
         chopped = {}
@@ -163,7 +199,7 @@ def orthoani_pairwise(
         results = {}
         for i, g1 in enumerate(genomes):
             results[g1.id, g1.id] = 1.0
-            for g2 in tqdm.tqdm(genomes[i+1:], leave=False):
+            for g2 in genomes[i+1:]:
                 ani = _orthoani(chopped[g1.id], chopped[g2.id], blocksize=blocksize)
                 results[g1.id, g2.id] = results[g2.id, g1.id] = ani
         # return the orthoani score for each pair

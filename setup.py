@@ -1,6 +1,4 @@
 import configparser
-import sys
-
 import setuptools
 from setuptools.command.sdist import sdist as _sdist
 
