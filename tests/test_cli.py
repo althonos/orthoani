@@ -4,6 +4,7 @@ import pathlib
 import unittest
 import subprocess
 import sys
+from subprocess import PIPE
 
 from Bio.SeqIO import read
 
@@ -20,6 +21,6 @@ class TestCli(unittest.TestCase):
     def test_orthoani_cli(self):
         # check the score we get is the same as the OrthoANI Java implementation
         args = [sys.executable, "-m", "orthoani", "-q", self.p1, "-r", self.p2]
-        proc = subprocess.run(args, capture_output=True, cwd=self.data.parent.parent)
+        proc = subprocess.run(args, stdout=PIPE, cwd=self.data.parent.parent)
         proc.check_returncode()
         self.assertEqual(proc.stdout, b"0.5725\n")
