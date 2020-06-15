@@ -1,4 +1,4 @@
-# OrthoANI
+# OrthoANI [![Stars](https://img.shields.io/github/stars/althonos/orthoani.svg?style=social&maxAge=3600&label=Star)](https://github.com/althonos/orthoani/stargazers)
 
 *A Python implementation of the [OrthoANI](https://doi.org/10.1099/ijsem.0.000760) algorithm for nucleotide identity measurement.*
 
@@ -78,6 +78,7 @@ This library is provided under the open-source
 [MIT license](https://choosealicense.com/licenses/mit/).
 
 *This project is in no way not affiliated, sponsored, or otherwise endorsed by
-the original OrthoANI authors. It was developed by
+the [original OrthoANI authors](http://www.chunlab.com/). It was developed by
 [Martin Larralde](https://github.com/althonos/orthoani) during his PhD project
-at the [European Molecular Biology Laboratory](https://www.embl.de/).*
+at the [European Molecular Biology Laboratory](https://www.embl.de/) in
+the [Zeller team](https://github.com/zellerlab).*
