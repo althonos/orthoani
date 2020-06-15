@@ -14,6 +14,14 @@ from Bio.Blast.Applications import NcbimakeblastdbCommandline as MakeBlastDB
 from ._utils import ExitStack, BlockIterator, temppath
 
 __all__ = ["orthoani", "orthoani_pairwise"]
+__author__ = "Martin Larralde <martin.larralde@embl.de>"
+__license__ = "MIT"
+__version__ = (
+    __import__("pkg_resources")
+    .resource_string(__name__, "_version.txt")
+    .decode("utf-8")
+    .strip()
+)
 
 
 @contextlib.contextmanager
