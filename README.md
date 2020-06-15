@@ -66,10 +66,10 @@ $ python -m orthoani -q sequence1.fa -r sequence2.fa
 `orthoani` uses the machine temporary folder to handle BLAST+ input and output
 files, which is configurable through
 [`tempfile.tempdir`](https://docs.python.org/3/library/tempfile.html#tempfile.tempdir).
-On some systems (like ArchLinux), this filesystem can reside only in memory,
-which means that your computer could have trouble processing very large files.
-If this happens, try changing the value of the `tempfile.tempdir` to a directory
-that is actually on physical storage.
+On some systems (like ArchLinux), this filesystem can reside in memory, which means
+that your computer could have trouble processing very large files. If this
+happens, try changing the value of the `tempfile.tempdir` to a directory that
+is actually located on physical storage.
 
 
 ## 📜 About
