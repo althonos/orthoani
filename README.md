@@ -5,12 +5,15 @@
 [![TravisCI](https://img.shields.io/travis/althonos/orthoani/master.svg?logo=travis&maxAge=600&style=flat-square)](https://travis-ci.com/althonos/orthoani/branches)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&maxAge=2678400)](https://choosealicense.com/licenses/mit/)
 [![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/orthoani/)
+[![Coverage](https://img.shields.io/codecov/c/gh/althonos/orthoani?style=flat-square&maxAge=3600)](https://codecov.io/gh/althonos/orthoani/)
+[![Sanity](https://img.shields.io/codacy/grade/4a427dadd1864c93ab9a55cb34c389a0.svg?style=flat-square&maxAge=3600)](https://codacy.com/app/althonos/orthoani)
 [![PyPI](https://img.shields.io/pypi/v/orthoani.svg?style=flat-square&maxAge=600)](https://pypi.org/project/orthoani)
 [![Wheel](https://img.shields.io/pypi/wheel/orthoani.svg?style=flat-square&maxAge=3600)](https://pypi.org/project/orthoani/#files)
 [![Python Versions](https://img.shields.io/pypi/pyversions/orthoani.svg?style=flat-square&maxAge=600)](https://pypi.org/project/orthoani/#files)
 [![Python Implementations](https://img.shields.io/pypi/implementation/orthoani.svg?style=flat-square&maxAge=600)](https://pypi.org/project/orthoani/#files)
 [![Changelog](https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/orthoani/blob/master/CHANGELOG.md)
 [![GitHub issues](https://img.shields.io/github/issues/althonos/orthoani.svg?style=flat-square&maxAge=600)](https://github.com/althonos/orthoani/issues)
+[![Downloads](https://img.shields.io/badge/dynamic/json?style=flat-square&color=303f9f&maxAge=86400&label=downloads&query=%24.total_downloads&url=https%3A%2F%2Fapi.pepy.tech%2Fapi%2Fprojects%2Forthoani)](https://pepy.tech/project/orthoani)
 
 ## 🗺️ Overview
 
