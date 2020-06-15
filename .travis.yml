@@ -6,7 +6,7 @@ cache: pip
 addons:
   apt:
     packages:
-    - pandoc
+    - ncbi-blast+
 
 python:
 - 3.6
