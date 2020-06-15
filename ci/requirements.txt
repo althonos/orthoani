@@ -1,0 +1,6 @@
+coverage
+codecov
+codacy-coverage
+twine
+wheel
+pip
