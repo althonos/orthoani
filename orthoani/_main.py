@@ -15,19 +15,19 @@ def argument_parser():
     parser = argparse.ArgumentParser(
         prog="orthoani",
         description="Compute OrthoANI between two sequences in FASTA format.",
-        epilog="Full documentation <https://github.com/althonos/orthoani>"
+        epilog="Full documentation <https://github.com/althonos/orthoani>",
     )
     parser.add_argument(
-        '-T',
-        '--traceback',
-        action='store_true',
+        "-T",
+        "--traceback",
+        action="store_true",
         help="display a complete traceback on program error",
     )
     parser.add_argument(
-        '-V',
-        '--version',
-        action='version',
-        version='{} {}'.format(__name__, __version__)
+        "-V",
+        "--version",
+        action="version",
+        version="{} {}".format(__name__, __version__),
     )
     parser.add_argument(
         "-j",
@@ -41,14 +41,14 @@ def argument_parser():
         "--query",
         metavar="Q",
         help="the path to the first sequence to process",
-        required=True
+        required=True,
     )
     parser.add_argument(
         "-r",
         "--reference",
         metavar="R",
         help="the path to the second sequence to process",
-        required=True
+        required=True,
     )
     return parser
 
