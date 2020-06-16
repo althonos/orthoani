@@ -57,7 +57,7 @@ ani = orthoani.orthoani(genome_1, genome_2)
 `orthoani` can also be used from the CLI using a very simple command-line
 interface:
 ```console
-$ python -m orthoani -q sequence1.fa -r sequence2.fa
+$ orthoani -q sequence1.fa -r sequence2.fa
 0.5725
 ```
 
