@@ -55,7 +55,7 @@ def temppath(suffix: str = "") -> Iterator[Path]:
     context is exited.
     """
     try:
-        temp = tempfile.NamedTemporaryFile(mode="w", suffix=suffix, delete=False)
+        temp = tempfile.NamedTemporaryFile(mode="w", suffix=suffix)
         yield Path(temp.name)
     finally:
         temp.close()
