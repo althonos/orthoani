@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [Unreleased]: https://github.com/althonos/orthoani/compare/v0.2.1...HEAD
 
 ## [v0.2.1] - 2020-06-19
-[v0.2.0]: https://github.com/althonos/orthoani/compare/v0.2.0...v0.2.1
+[v0.2.1]: https://github.com/althonos/orthoani/compare/v0.2.0...v0.2.1
 ### Fixed
 - Temporary files with chopped FASTA not being deleted.
 
