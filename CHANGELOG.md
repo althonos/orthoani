@@ -5,7 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/orthoani/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/althonos/orthoani/compare/v0.2.1...HEAD
+
+## [v0.2.1] - 2020-06-19
+[v0.2.0]: https://github.com/althonos/orthoani/compare/v0.2.0...v0.2.1
+### Fixed
+- Temporary files with chopped FASTA not being deleted.
 
 ## [v0.2.0] - 2020-06-16
 [v0.2.0]: https://github.com/althonos/orthoani/compare/v0.1.0-post1...v0.2.0
