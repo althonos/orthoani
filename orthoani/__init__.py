@@ -86,29 +86,21 @@ def _hits(
         xdrop_gap=150,
         penalty=-1,
         reward=1,
-        num_alignments=1,
+        max_target_seqs=1,
         num_threads=threads,
         outfmt=5,
     )
     output = io.StringIO(cmd()[0])
 
-    identities = {}
+    hits = {}
     for record in NCBIXML.parse(output):
         if record.alignments:
             hsps = record.alignments[0].hsps
-            if all(hsp.align_length > 0.35 * blocksize for hsp in hsps):
-                q = record.query
-                r = record.alignments[0].hit_def
-
-                length = matches = 0
-                for hsp in hsps:
-                    for qn, sn in zip(hsp.query, hsp.sbjct):
-                        if _is_atgc(qn) and _is_atgc(sn):
-                            length += 1
-                            matches += (qn == sn)
-                identities[q, r] = matches / length
-
-    return identities
+            if all(hsp.align_length >= 0.35 * blocksize for hsp in hsps):
+                pos = sum(hsp.identities for hsp in hsps)
+                length = sum(hsp.align_length for hsp in hsps)
+                hits[record.query, record.alignments[0].hit_def] = pos / length
+    return hits
 
 
 def _orthoani(
@@ -133,9 +125,9 @@ def _orthoani(
 
     ani = 0.0
     for hit_q, hit_r in hits.items():
-        ani += (backward[hit_r, hit_q] + forward[hit_q, hit_r]) / 2
+        ani += backward[hit_r, hit_q] + forward[hit_q, hit_r]
     if hits:
-        ani /= len(hits)
+        ani /= len(hits) * 2
     return ani
 
 

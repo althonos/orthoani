@@ -15,6 +15,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/althonos/orthoani.svg?style=flat-square&maxAge=600)](https://github.com/althonos/orthoani/issues)
 [![Downloads](https://img.shields.io/badge/dynamic/json?style=flat-square&color=303f9f&maxAge=86400&label=downloads&query=%24.total_downloads&url=https%3A%2F%2Fapi.pepy.tech%2Fapi%2Fprojects%2Forthoani)](https://pepy.tech/project/orthoani)
 
+
 ## 🗺️ Overview
 
 OrthoANI is a metric proposed by [Lee *et al.*](https://doi.org/10.1099/ijsem.0.000760)
@@ -40,6 +41,7 @@ $ pip install orthoani
 `orthoani` also requires the BLAST+ binaries to be installed on your machine
 and available somewhere in your `$PATH`.
 
+
 ## 💡 Example
 
 Use Biopython to load two FASTA files, and then `orthoani.orthoani` to compute
@@ -61,6 +63,7 @@ $ orthoani -q sequence1.fa -r sequence2.fa
 0.5725
 ```
 
+
 ## 🐏 Memory
 
 `orthoani` uses the machine temporary folder to handle BLAST+ input and output
@@ -70,6 +73,13 @@ On some systems (like ArchLinux), this filesystem can reside in memory, which me
 that your computer could have trouble processing very large files. If this
 happens, try changing the value of the `tempfile.tempdir` to a directory that
 is actually located on physical storage.
+
+
+## 📏 Precision
+
+Values computed by this package and the original Java implementation may differ
+slightly because in Java the authors perform rounding of floating-point values
+at the sub-percent level, while this library uses the full values.
 
 
 ## 📜 About
