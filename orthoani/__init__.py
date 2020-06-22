@@ -1,7 +1,9 @@
 """Implementation of the OrthoANI algorithm for nucleotide identity measurement.
 """
 
+import collections
 import contextlib
+import decimal
 import io
 import os
 import multiprocessing.pool
@@ -74,7 +76,7 @@ def _chop(record: Union[SeqRecord, Iterable[SeqRecord]], dest: os.PathLike, bloc
 
 def _hits(
     query: os.PathLike, reference: os.PathLike, blocksize: int, threads: int,
-) -> Dict[Tuple[str, str], float]:
+) -> Dict[Tuple[str, str], decimal.Decimal]:
     """Compute the hits from ``query`` to ``reference``.
     """
     cmd = BlastN(
@@ -92,14 +94,16 @@ def _hits(
     )
     output = io.StringIO(cmd()[0])
 
-    hits = {}
+    hits = collections.defaultdict(list)
     for record in NCBIXML.parse(output):
         if record.alignments:
-            hsps = record.alignments[0].hsps
-            if all(hsp.align_length >= 0.35 * blocksize for hsp in hsps):
-                pos = sum(hsp.identities for hsp in hsps)
-                length = sum(hsp.align_length for hsp in hsps)
-                hits[record.query, record.alignments[0].hit_def] = pos / length
+            nid = length = decimal.Decimal(0)
+            for hsp in record.alignments[0].hsps:
+                if hsp.align_length >= 0.35 * blocksize:
+                    nid += hsp.identities
+                    length += hsp.align_length
+            if length != 0:
+                hits[record.query, record.alignments[0].hit_def] = nid / length
     return hits
 
 
@@ -123,12 +127,12 @@ def _orthoani(
     backward = _hits(reference, query, blocksize=blocksize, threads=threads)
     hits = {k: v for k, v in forward if (v, k) in backward}
 
-    ani = 0.0
+    ani = decimal.Decimal(0)
     for hit_q, hit_r in hits.items():
         ani += backward[hit_r, hit_q] + forward[hit_q, hit_r]
     if hits:
         ani /= len(hits) * 2
-    return ani
+    return float(ani)
 
 
 def orthoani(
