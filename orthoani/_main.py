@@ -6,7 +6,8 @@ import signal
 import sys
 
 import better_exceptions
-from Bio.SeqIO import read
+from Bio.SeqRecord import SeqRecord
+from Bio.SeqIO import parse
 
 from . import orthoani, __name__, __version__
 
@@ -59,8 +60,8 @@ def main(argv=None):
     better_exceptions.hook()
 
     try:
-        query = read(args.query, "fasta")
-        reference = read(args.reference, "fasta")
+        query = parse(args.query, "fasta")
+        reference = parse(args.reference, "fasta")
         print(orthoani(query, reference))
         return 0
 

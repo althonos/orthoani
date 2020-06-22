@@ -14,7 +14,7 @@ class TestCli(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.data = pathlib.Path(__file__).parent / "data"
-        cls.p1, cls.p2 = map(os.fspath, cls.data.glob("*.fna"))
+        cls.p1, cls.p2 = map(os.fspath, cls.data.glob("1852379.*.fna"))
 
     def shell(self, args):
         return subprocess.run(

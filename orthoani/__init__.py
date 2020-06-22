@@ -5,7 +5,7 @@ import contextlib
 import io
 import os
 import multiprocessing.pool
-from typing import Dict, List, Iterator, Tuple
+from typing import Dict, List, Iterator, Iterable, Tuple, Union
 
 import Bio.SeqIO
 from Bio.SeqRecord import SeqRecord
@@ -24,6 +24,11 @@ __version__ = (
     .decode("utf-8")
     .strip()
 )
+
+
+def _is_atgc(char: str):
+    n = ord(char)
+    return n == 65 or n == 84 or n == 67 or n == 71
 
 
 @contextlib.contextmanager
@@ -47,25 +52,24 @@ def _database(reference: os.PathLike) -> Iterator[None]:
         os.remove("{}.nsq".format(os.fspath(reference)))
 
 
-def _chop(record: SeqRecord, dest: os.PathLike, blocksize: int) -> None:
+def _chop(record: Union[SeqRecord, Iterable[SeqRecord]], dest: os.PathLike, blocksize: int) -> None:
     """Chop a single record into blocks and write it to ``dest``.
 
     Arguments:
-        record (`~Bio.SeqRecord.SeqRecord`): The record to chop.
+        record (iterable of `~Bio.SeqRecord.SeqRecord`): The record to chop,
+            wrapped in an iterable containing one or more contigs.
         dest (`~os.PathLike`): The path to the file where to write the blocks.
         blocksize (`int`): The size of block, in nucleotides.
 
     """
+    if isinstance(record, SeqRecord):
+        record = [record]
     with open(dest, mode="w") as d:
-        if len(record) < blocksize:
-            record = record[:0]
-            record.id = "{}_{}".format(record.id, 1)
-            record.description = ""
-            Bio.SeqIO.write(record, d, "fasta")
-        for i, block in enumerate(BlockIterator(record, blocksize)):
-            block.id = "{}_{}".format(block.id, i)
-            block.description = ""
-            Bio.SeqIO.write(block, d, "fasta")
+        for r in record:
+            for i, block in enumerate(BlockIterator(r, blocksize)):
+                block.id = "{}_{}".format(block.id, i)
+                block.description = ""
+                Bio.SeqIO.write(block, d, "fasta")
 
 
 def _hits(
@@ -95,9 +99,14 @@ def _hits(
             if all(hsp.align_length > 0.35 * blocksize for hsp in hsps):
                 q = record.query
                 r = record.alignments[0].hit_def
-                identities[q, r] = sum(
-                    hsp.identities / hsp.align_length for hsp in hsps
-                ) / len(hsps)
+
+                length = matches = 0
+                for hsp in hsps:
+                    for qn, sn in zip(hsp.query, hsp.sbjct):
+                        if _is_atgc(qn) and _is_atgc(sn):
+                            length += 1
+                            matches += (qn == sn)
+                identities[q, r] = matches / length
 
     return identities
 
@@ -114,7 +123,7 @@ def _orthoani(
         threads (`int`): The number of threads to use to run ``blastn``.
 
     Caution:
-        This function expects that a BLASTn database has been created for 
+        This function expects that a BLASTn database has been created for
         both of its inputs, next to the source FASTA file.
 
     """
@@ -131,8 +140,8 @@ def _orthoani(
 
 
 def orthoani(
-    reference: SeqRecord,
-    query: SeqRecord,
+    reference: Union[SeqRecord, Iterable[SeqRecord]],
+    query: Union[SeqRecord, Iterable[SeqRecord]],
     blocksize: int = 1020,
     threads: int = multiprocessing.cpu_count(),
 ) -> float:
@@ -140,7 +149,11 @@ def orthoani(
 
     Arguments:
         reference (`~Bio.SeqRecord.SeqRecord`): The first record to process.
+            If an iterable is given, it is assumed to yield contigs of the same
+            genome.
         query (`~Bio.SeqRecord.SeqRecord`): The second record to process.
+            If an iterable is given, it is assumed to yield contigs of the same
+            genome.
         blocksize (`int`): The size of blocks to use for computation. Defaults
             to *1020bp*, the size used in the OrthoANI reference paper.
         threads (`int`): The number of threads to use to run ``blastn``.
