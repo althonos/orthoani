@@ -57,7 +57,6 @@ def argument_parser():
 def main(argv=None):
     parser = argument_parser()
     args = parser.parse_args(argv)
-    better_exceptions.hook()
 
     try:
         query = parse(args.query, "fasta")
@@ -70,9 +69,11 @@ def main(argv=None):
         return -signal.SIGINT
 
     except Exception as e:
-        print(e, file=sys.stderr)
-        try:
-            if args.traceback:
-                raise
-        finally:
-            return getattr(e, "errno", 1)
+        if args.traceback: 
+            print(
+                better_exceptions.format_exception(type(e), e, e.__traceback__), 
+                file=sys.stderr
+            )
+        else:
+            print(e, file=sys.stderr)
+        return getattr(e, "errno", 1)

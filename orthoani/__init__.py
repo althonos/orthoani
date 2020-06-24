@@ -99,7 +99,7 @@ def _hits(
     args = shlex.split(str(cmd))
     proc = subprocess.run(args, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    hits = collections.defaultdict(list)
+    hits = {}
     for record in NCBIXML.parse(io.BytesIO(proc.stdout)):
         if record.alignments:
             nid = length = decimal.Decimal(0)
@@ -107,7 +107,7 @@ def _hits(
                 if hsp.align_length >= 0.35 * blocksize:
                     nid += hsp.identities
                     length += hsp.align_length
-            if length != 0:
+            if length > 0:
                 hits[record.query, record.alignments[0].hit_def] = nid / length
     return hits
 
