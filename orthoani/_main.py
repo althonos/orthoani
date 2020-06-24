@@ -61,7 +61,7 @@ def main(argv=None):
     try:
         query = parse(args.query, "fasta")
         reference = parse(args.reference, "fasta")
-        print(orthoani(query, reference))
+        print(orthoani(query, reference, threads=args.jobs))
         return 0
 
     except KeyboardInterrupt:
