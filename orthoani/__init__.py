@@ -7,6 +7,8 @@ import decimal
 import io
 import os
 import multiprocessing.pool
+import shlex
+import subprocess
 from typing import Dict, List, Iterator, Iterable, Tuple, Union
 
 import Bio.SeqIO
@@ -46,7 +48,9 @@ def _database(reference: os.PathLike) -> Iterator[None]:
 
     """
     try:
-        MakeBlastDB(dbtype="nucl", input_file=os.fspath(reference))()
+        cmd = MakeBlastDB(dbtype="nucl", input_file=os.fspath(reference))
+        args = shlex.split(str(cmd))
+        subprocess.run(args, check=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         yield
     finally:
         os.remove("{}.nhr".format(os.fspath(reference)))
@@ -92,10 +96,11 @@ def _hits(
         num_threads=threads,
         outfmt=5,
     )
-    output = io.StringIO(cmd()[0])
+    args = shlex.split(str(cmd))
+    proc = subprocess.run(args, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     hits = collections.defaultdict(list)
-    for record in NCBIXML.parse(output):
+    for record in NCBIXML.parse(io.BytesIO(proc.stdout)):
         if record.alignments:
             nid = length = decimal.Decimal(0)
             for hsp in record.alignments[0].hsps:
