@@ -9,7 +9,14 @@ import os
 import multiprocessing.pool
 import shlex
 import subprocess
+from subprocess import PIPE, DEVNULL
 from typing import Dict, List, Iterator, Iterable, Tuple, Union
+
+try:
+    from os import PathLike, fspath
+except ImportError:  # python 3.5
+    from pathlib import Path as PathLike  # type: ignore
+    from builtins import str as fspath  # type: ignore
 
 import Bio.SeqIO
 from Bio.SeqRecord import SeqRecord
@@ -30,13 +37,13 @@ __version__ = (
 )
 
 
-def _is_atgc(char: str):
+def _is_atgc(char: str) -> bool:
     n = ord(char)
     return n == 65 or n == 84 or n == 67 or n == 71
 
 
 @contextlib.contextmanager
-def _database(reference: os.PathLike) -> Iterator[None]:
+def _database(reference: "PathLike[str]") -> Iterator[None]:
     """Get a context to manage a database for the given reference genome.
 
     The database is created when the context is entered, and deleted when it
@@ -48,17 +55,19 @@ def _database(reference: os.PathLike) -> Iterator[None]:
 
     """
     try:
-        cmd = MakeBlastDB(dbtype="nucl", input_file=os.fspath(reference))
+        cmd = MakeBlastDB(dbtype="nucl", input_file=fspath(reference))
         args = shlex.split(str(cmd))
-        subprocess.run(args, check=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        subprocess.run(args, check=True, stderr=DEVNULL, stdout=DEVNULL)
         yield
     finally:
-        os.remove("{}.nhr".format(os.fspath(reference)))
-        os.remove("{}.nin".format(os.fspath(reference)))
-        os.remove("{}.nsq".format(os.fspath(reference)))
+        os.remove("{}.nhr".format(fspath(reference)))
+        os.remove("{}.nin".format(fspath(reference)))
+        os.remove("{}.nsq".format(fspath(reference)))
 
 
-def _chop(record: Union[SeqRecord, Iterable[SeqRecord]], dest: os.PathLike, blocksize: int) -> None:
+def _chop(
+    record: Union[SeqRecord, Iterable[SeqRecord]], dest: "PathLike[str]", blocksize: int
+) -> None:
     """Chop a single record into blocks and write it to ``dest``.
 
     Arguments:
@@ -79,14 +88,14 @@ def _chop(record: Union[SeqRecord, Iterable[SeqRecord]], dest: os.PathLike, bloc
 
 
 def _hits(
-    query: os.PathLike, reference: os.PathLike, blocksize: int, threads: int,
+    query: "PathLike[str]", reference: "PathLike[str]", blocksize: int, threads: int,
 ) -> Dict[Tuple[str, str], decimal.Decimal]:
     """Compute the hits from ``query`` to ``reference``.
     """
     cmd = BlastN(
         task="blastn",
-        query=os.fspath(query),
-        db=os.fspath(reference),
+        query=fspath(query),
+        db=fspath(reference),
         evalue=1e-5,
         dust="no",
         xdrop_gap=150,
@@ -97,7 +106,7 @@ def _hits(
         outfmt=5,
     )
     args = shlex.split(str(cmd))
-    proc = subprocess.run(args, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.run(args, check=True, stdout=PIPE, stderr=DEVNULL)
 
     hits = {}
     for record in NCBIXML.parse(io.BytesIO(proc.stdout)):
@@ -113,7 +122,7 @@ def _hits(
 
 
 def _orthoani(
-    query: os.PathLike, reference: os.PathLike, blocksize: int, threads: int
+    query: "PathLike[str]", reference: "PathLike[str]", blocksize: int, threads: int
 ) -> float:
     """Compute the OrthoANI score for two chopped sequences.
 
@@ -179,7 +188,8 @@ def orthoani(
         _chop(query, chopped_q, blocksize=blocksize)
         ctx << _database(chopped_q)
         # return the orthoani score
-        return _orthoani(chopped_q, chopped_r, blocksize, threads)
+        ani = _orthoani(chopped_q, chopped_r, blocksize, threads)
+    return ani
 
 
 def orthoani_pairwise(
@@ -218,5 +228,5 @@ def orthoani_pairwise(
             for g2 in genomes[i + 1 :]:
                 ani = _orthoani(chopped[g1.id], chopped[g2.id], blocksize, threads)
                 results[g1.id, g2.id] = results[g2.id, g1.id] = ani
-        # return the orthoani score for each pair
-        return results
+    # return the orthoani score for each pair
+    return results

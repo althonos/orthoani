@@ -2,11 +2,15 @@
 """
 
 import contextlib
-import collections.abc
 import tempfile
+from typing import Any, ContextManager, Generic, Iterator, Sequence, TypeVar
 
 from pathlib import Path
 from typing import Iterator
+
+
+_T = TypeVar("_T")
+_S = TypeVar("_S", bound=Sequence[Any])
 
 
 class ExitStack(contextlib.ExitStack):
@@ -17,11 +21,11 @@ class ExitStack(contextlib.ExitStack):
     by the built-in `contexlib` module.
     """
 
-    def __lshift__(self, r):  # noqa: D105
+    def __lshift__(self, r: ContextManager[_T]) -> _T:  # noqa: D105
         return self.enter_context(r)
 
 
-class BlockIterator(collections.abc.Iterator):
+class BlockIterator(Generic[_S], Iterator[_S]):
     """An iterator that yields even-sized blocks from a sliceable input.
 
     Example:
@@ -32,18 +36,18 @@ class BlockIterator(collections.abc.Iterator):
 
     """
 
-    def __init__(self, data, blocksize):  # noqa: D105, D107
+    def __init__(self, data: _S, blocksize: int):  # noqa: D105, D107
         self.data = data[:]
         self.blocksize = blocksize
 
-    def __iter__(self):  # noqa: D105
+    def __iter__(self) -> "BlockIterator[_S]":  # noqa: D105
         return self
 
-    def __next__(self):  # noqa: D105
+    def __next__(self) -> _S:  # noqa: D105
         if len(self.data) > self.blocksize:
             block = self.data[: self.blocksize]
             self.data = self.data[self.blocksize :]
-            return block
+            return block  # type: ignore
         raise StopIteration
 
 

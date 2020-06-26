@@ -4,6 +4,8 @@ import argparse
 import multiprocessing
 import signal
 import sys
+import typing
+from typing import Optional, List
 
 import better_exceptions
 from Bio.SeqRecord import SeqRecord
@@ -12,7 +14,7 @@ from Bio.SeqIO import parse
 from . import orthoani, __name__, __version__
 
 
-def argument_parser():
+def argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="orthoani",
         description="Compute OrthoANI between two sequences in FASTA format.",
@@ -54,7 +56,7 @@ def argument_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Optional[List[str]] = None) -> int:
     parser = argument_parser()
     args = parser.parse_args(argv)
 
@@ -69,11 +71,11 @@ def main(argv=None):
         return -signal.SIGINT
 
     except Exception as e:
-        if args.traceback: 
+        if args.traceback:
             print(
-                better_exceptions.format_exception(type(e), e, e.__traceback__), 
-                file=sys.stderr
+                better_exceptions.format_exception(type(e), e, e.__traceback__),
+                file=sys.stderr,
             )
         else:
             print(e, file=sys.stderr)
-        return getattr(e, "errno", 1)
+        return typing.cast(int, getattr(e, "errno", 1))
