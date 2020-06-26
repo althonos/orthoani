@@ -37,11 +37,6 @@ __version__ = (
 )
 
 
-def _is_atgc(char: str) -> bool:
-    n = ord(char)
-    return n == 65 or n == 84 or n == 67 or n == 71
-
-
 @contextlib.contextmanager
 def _database(reference: "PathLike[str]") -> Iterator[None]:
     """Get a context to manage a database for the given reference genome.
