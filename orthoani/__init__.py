@@ -81,6 +81,8 @@ def _chop(
         record = [record]
     with open(fspath(dest), mode="w") as d:
         for r in record:
+            if len(r) < blocksize:
+                r.seq += "N" * (blocksize - len(r) + 1)
             for i, block in enumerate(BlockIterator(r, blocksize)):
                 block.id = "{}_{}".format(block.id, i)
                 block.description = ""
