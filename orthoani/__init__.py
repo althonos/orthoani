@@ -49,15 +49,20 @@ def _database(reference: "PathLike[str]") -> Iterator[None]:
             genome to build a database for.
 
     """
+    cmd = MakeBlastDB(dbtype="nucl", input_file=fspath(reference))
+    args = shlex.split(str(cmd))
+
     try:
-        cmd = MakeBlastDB(dbtype="nucl", input_file=fspath(reference))
-        args = shlex.split(str(cmd))
-        subprocess.run(args, check=True, stderr=DEVNULL, stdout=DEVNULL)
+        proc = subprocess.run(args, stderr=PIPE, stdout=DEVNULL)
+        proc.check_returncode()
         yield
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError(proc.stderr) from error
     finally:
-        os.remove("{}.nhr".format(fspath(reference)))
-        os.remove("{}.nin".format(fspath(reference)))
-        os.remove("{}.nsq".format(fspath(reference)))
+        for ext in "nhr", "nin", "nsq":
+            path = os.path.extsep.join([fspath(reference), ext])
+            if os.path.exists(path):
+                os.remove(path)
 
 
 def _chop(
