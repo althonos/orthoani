@@ -108,7 +108,12 @@ def _hits(
         outfmt=5,
     )
     args = shlex.split(str(cmd))
-    proc = subprocess.run(args, check=True, stdout=PIPE, stderr=DEVNULL)
+
+    try:
+        proc = subprocess.run(args, stdout=PIPE, stderr=DEVNULL)
+        proc.check_returncode()
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError(proc.stderr) from error
 
     hits = {}
     for record in NCBIXML.parse(io.BytesIO(proc.stdout)):
