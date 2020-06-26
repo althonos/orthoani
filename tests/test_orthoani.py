@@ -4,6 +4,11 @@ import pathlib
 import unittest
 import tempfile
 
+try:
+    from os import fspath
+except ImportError:
+    from builtins import str as fspath
+
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqIO import read, parse
 
@@ -14,7 +19,7 @@ class TestOrthoani(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.data = pathlib.Path(__file__).parent / "data"
-        cls.r1, cls.r2 = map(lambda p: read(p, "fasta"), cls.data.glob("1852379.*.fna"))
+        cls.r1, cls.r2 = map(lambda p: read(fspath(p), "fasta"), cls.data.glob("1852379.*.fna"))
 
     def test_orthoani_single(self):
         # check the score we get is the same as the OrthoANI Java implementation
@@ -36,7 +41,7 @@ class TestChop(unittest.TestCase):
         cls.data = pathlib.Path(__file__).parent / "data"
 
     def test_single_contig(self):
-        record = read(self.data / "U00096-3.fasta", "fasta")
+        record = read(fspath(self.data / "U00096-3.fasta"), "fasta")
         with (self.data / "U00096-3.fasta.chopped.fasta").open() as f:
             expected = list(parse(f, "fasta"))
         with tempfile.NamedTemporaryFile(mode="rt", suffix=".fna") as tmp:
@@ -46,7 +51,7 @@ class TestChop(unittest.TestCase):
             self.assertEqual(actual_record.seq, expected_record.seq)
 
     def test_multiple_contig(self):
-        record = parse(self.data / "NZ_AAEN01000029.fna", "fasta")
+        record = parse(fspath(self.data / "NZ_AAEN01000029.fna"), "fasta")
         with (self.data / "NZ_AAEN01000029.fna.chopped.fasta").open() as f:
             expected = list(parse(f, "fasta"))
         with tempfile.NamedTemporaryFile(mode="rt", suffix=".fna") as tmp:

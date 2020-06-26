@@ -79,7 +79,7 @@ def _chop(
     """
     if isinstance(record, SeqRecord):
         record = [record]
-    with open(dest, mode="w") as d:
+    with open(fspath(dest), mode="w") as d:
         for r in record:
             for i, block in enumerate(BlockIterator(r, blocksize)):
                 block.id = "{}_{}".format(block.id, i)
