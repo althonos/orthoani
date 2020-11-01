@@ -4,3 +4,5 @@ codacy-coverage
 twine
 wheel
 pip
+
+setuptools >=46.4    ; python_version == '3.5'
