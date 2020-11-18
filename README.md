@@ -29,6 +29,7 @@ considering alignments of reciprocal orthologs.
 This project is a reimplementation of the closed-source Java implementation
 provided by the authors on [`ezbiocloud.net`](https://www.ezbiocloud.net/sw/oat).
 It relies on [Biopython](https://biopython.org/) to handle the I/O and the
+interaction with the BLAST+ binaries.
 
 
 ## 🔧 Installing
