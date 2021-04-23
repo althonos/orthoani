@@ -9,6 +9,7 @@ import os
 import multiprocessing.pool
 import shlex
 import subprocess
+import tempfile
 from subprocess import PIPE, DEVNULL
 from typing import Dict, List, Iterator, Iterable, Tuple, Union
 
@@ -44,9 +45,16 @@ def _database(reference: "PathLike[str]") -> Iterator[None]:
             genome to build a database for.
 
     """
-    cmd = MakeBlastDB(dbtype="nucl", input_file=fspath(reference))
-    args = shlex.split(str(cmd))
-
+    args = [
+        "makeblastdb",
+        "-parse_seqids",
+        "-dbtype",
+        "nucl",
+        "-in",
+        fspath(reference),
+        "-blastdb_version",
+        "5",
+    ]
     try:
         proc = subprocess.run(args, stderr=PIPE, stdout=DEVNULL)
         proc.check_returncode()
@@ -79,36 +87,71 @@ def _chop(
             if len(r) < blocksize:
                 r.seq += "N" * (blocksize - len(r) + 1)
             for i, block in enumerate(BlockIterator(r, blocksize)):
-                block.id = "{}_{}".format(block.id, i)
+                block.id = "{}_{}".format(r.id, i)
                 block.description = ""
                 Bio.SeqIO.write(block, d, "fasta")
 
 
 def _hits(
-    query: "PathLike[str]", reference: "PathLike[str]", blocksize: int, threads: int,
+    query: "PathLike[str]",
+    reference: "PathLike[str]",
+    blocksize: int,
+    threads: int,
+    seqids: "Optional[List[str]]" = None,
 ) -> Dict[Tuple[str, str], decimal.Decimal]:
-    """Compute the hits from ``query`` to ``reference``.
-    """
-    cmd = BlastN(
-        task="blastn",
-        query=fspath(query),
-        db=fspath(reference),
-        evalue=1e-5,
-        dust="no",
-        xdrop_gap=150,
-        penalty=-1,
-        reward=1,
-        max_target_seqs=1,
-        num_threads=threads,
-        outfmt=5,
-    )
-    args = shlex.split(str(cmd))
+    """Compute the hits from ``query`` to ``reference``."""
 
-    try:
-        proc = subprocess.run(args, stdout=PIPE, stderr=DEVNULL)
-        proc.check_returncode()
-    except subprocess.CalledProcessError as error:
-        raise RuntimeError(proc.stderr) from error
+    with ExitStack() as ctx:
+
+        blastn_args = dict(
+            task="blastn",
+            query=fspath(query),
+            db=fspath(reference),
+            evalue=1e-5,
+            dust="no",
+            xdrop_gap=150,
+            penalty=-1,
+            reward=1,
+            max_target_seqs=1,
+            num_threads=threads,
+            outfmt=5,
+        )
+
+        if seqids is not None:
+            # write down sequence IDs to keep while running BLASTn
+            seqids_file = ctx << temppath(suffix=".pacc")
+            with open(seqid_file, "w") as f:
+                f.writelines(["{}\n".format(x) for x in seqids])
+
+            # convert the IDs to an alias file with `blastdb_aliastool`
+            seqalias_file = ctx << temppath(suffix=".pacc.bsl")
+            args = [
+                "blastdb_aliastool",
+                "-seqid_file_in",
+                fspath(seqid_file),
+                "-seqid_db",
+                fspath(reference),
+                "-seqid_dbtype",
+                "nucl",
+                "-seqid_file_out",
+                seqalias_file,
+            ]
+            try:
+                proc = subprocess.run(args, stdout=PIPE, stderr=PIPE)
+                proc.check_returncode()
+            except subprocess.CalledProcessError as error:
+                raise RuntimeError(proc.stderr or proc.stdout) from error
+
+            # use the alias file as a seqidlist
+            blastn_args["seqidlist"] = seqalias_file
+
+        cmd = BlastN(**blastn_args)
+        args = shlex.split(str(cmd))
+        try:
+            proc = subprocess.run(args, stdout=PIPE, stderr=PIPE)
+            proc.check_returncode()
+        except subprocess.CalledProcessError as error:
+            raise RuntimeError(proc.stderr or proc.stdout) from error
 
     hits = {}
     for record in NCBIXML.parse(io.BytesIO(proc.stdout)):
@@ -119,7 +162,7 @@ def _hits(
                     nid += hsp.identities
                     length += hsp.align_length
             if length > 0:
-                hits[record.query, record.alignments[0].hit_def] = nid / length
+                hits[record.query, record.alignments[0].hit_id] = nid / length
     return hits
 
 
@@ -139,8 +182,19 @@ def _orthoani(
         both of its inputs, next to the source FASTA file.
 
     """
+    # compute forward hits: every sequence is used
     forward = _hits(query, reference, blocksize=blocksize, threads=threads)
-    backward = _hits(reference, query, blocksize=blocksize, threads=threads)
+
+    # compute forward hits: only sequences that got a forward hit are used
+    backward = _hits(
+        reference,
+        query,
+        blocksize=blocksize,
+        threads=threads,
+        seqids={k for k, v in forward},
+    )
+
+    # find reciprocical hits
     hits = {k: v for k, v in forward if (v, k) in backward}
 
     ani = decimal.Decimal(0)
