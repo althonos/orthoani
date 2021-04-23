@@ -48,7 +48,9 @@ jobs:
     - name: Install library
       run: pip install .
     - name: Test with coverage
-      run: python -m coverage run -p --source=orthoani -m unittest discover -v
+      run: python -m coverage run --source=orthoani -m unittest discover -v
+    - name: Convert coverage report
+      run: python -m coverage xml
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
       with:

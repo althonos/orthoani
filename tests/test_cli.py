@@ -1,9 +1,11 @@
+import io
 import os
 import glob
 import pathlib
 import unittest
 import subprocess
 import sys
+from unittest import mock
 
 try:
     from os import fspath
@@ -12,7 +14,7 @@ except ImportError:
 
 from Bio.SeqIO import read
 
-import orthoani
+import orthoani._main
 
 
 class TestCli(unittest.TestCase):
@@ -21,35 +23,42 @@ class TestCli(unittest.TestCase):
         cls.data = pathlib.Path(__file__).parent / "data"
         cls.p1, cls.p2 = map(fspath, cls.data.glob("1852379.*.fna"))
 
+    def setUp(self):
+        self.stdout = io.StringIO()
+        self._stdout_mock = mock.patch("sys.stdout", new=self.stdout)
+        self._stdout_mock.__enter__()
+        self.stderr= io.StringIO()
+        self._stderr_mock = mock.patch("sys.stderr", new=self.stderr)
+        self._stderr_mock.__enter__()
+
+    def tearDown(self):
+        self._stdout_mock.__exit__(None, None, None)
+        self._stderr_mock.__exit__(None, None, None)
+
     def shell(self, args):
-        return subprocess.run(
-            args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            cwd=fspath(self.data.parent.parent),
-        )
+        return orthoani._main.main(args)
 
     def test_orthoani_cli(self):
         # check the score we get is the same as the OrthoANI Java implementation
-        args = [sys.executable, "-m", "orthoani", "-q", self.p1, "-r", self.p2]
-        proc = self.shell(args)
-        proc.check_returncode()
-        self.assertEqual(proc.stdout, b"0.5725\n")
+        args = ["-q", self.p1, "-r", self.p2]
+        retcode = self.shell(args)
+        self.assertEqual(retcode, 0)
+        self.assertEqual(self.stdout.getvalue(), "0.5725\n")
 
     def test_return_code(self):
-        args = [sys.executable, "-m", "orthoani", "-q", fspath(self.data), "-r", self.p2]
-        proc = self.shell(args)
-        self.assertEqual(proc.returncode, 21) # IsADirectoryError
+        args = ["-q", fspath(self.data), "-r", self.p2]
+        retcode = self.shell(args)
+        self.assertEqual(retcode, 21) # IsADirectoryError
 
-        args = [sys.executable, "-m", "orthoani", "-q", "_", "-r", self.p2]
-        proc = self.shell(args)
-        self.assertEqual(proc.returncode, 2) # FileNotFoundError
+        args = ["-q", "_", "-r", self.p2]
+        retcode = self.shell(args)
+        self.assertEqual(retcode, 2) # FileNotFoundError
 
     def test_return_code_traceback(self):
-        args = [sys.executable, "-m", "orthoani", "-T", "-q", fspath(self.data), "-r", self.p2]
-        proc = self.shell(args)
-        self.assertEqual(proc.returncode, 21) # IsADirectoryError
+        args = ["-T", "-q", fspath(self.data), "-r", self.p2]
+        retcode = self.shell(args)
+        self.assertEqual(retcode, 21) # IsADirectoryError
 
-        args = [sys.executable, "-m", "orthoani", "-T", "-q", "_", "-r", self.p2]
-        proc = self.shell(args)
-        self.assertEqual(proc.returncode, 2) # FileNotFoundError
+        args = ["-T", "-q", "_", "-r", self.p2]
+        retcode = self.shell(args)
+        self.assertEqual(retcode, 2) # FileNotFoundError
