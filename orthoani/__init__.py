@@ -34,6 +34,42 @@ __version__ = "0.4.0"
 
 
 @contextlib.contextmanager
+def _seqidlist(seqids: "Iterable[str]") -> "Iterator[PathLike[str]]":
+    """Get a context manager to manage a sequence IDs file.
+
+    The file is created when the context is entered, and deleted when it
+    is exited.
+
+    Arguments:
+        seqids (iterable of `str`): The sequence IDs to write to the file.
+
+    """
+    with temppath(suffix=".pacc") as rawidfile_path:
+        # write down sequence IDs
+        with open(rawidfile_path, "w") as f:
+            f.writelines(["{}\n".format(seqid) for seqid in seqids])
+
+        # convert sequence IDs to the v5 BLASTDB format
+        seqidfile_path = "{}.bsl".format(fspath(rawidfile_path))
+        args = [
+            "blastdb_aliastool",
+            "-seqid_file_in",
+            fspath(rawidfile_path),
+            "-seqid_file_out",
+            fspath(seqidfile_path),
+        ]
+        try:
+            proc = subprocess.run(args, stdout=PIPE, stderr=PIPE)
+            proc.check_returncode()
+            yield seqidfile_path
+        except subprocess.CalledProcessError as error:
+            raise RuntimeError(proc.stderr or proc.stdout) from error
+        finally:
+            if os.path.exists(seqidfile_path):
+                os.remove(seqidfile_path)
+
+
+@contextlib.contextmanager
 def _database(reference: "PathLike[str]") -> Iterator[None]:
     """Get a context to manage a database for the given reference genome.
 
@@ -102,7 +138,7 @@ def _hits(
     """Compute the hits from ``query`` to ``reference``."""
 
     with ExitStack() as ctx:
-
+        # prepare BLASTn arguments
         blastn_args = dict(
             task="blastn",
             query=fspath(query),
@@ -116,34 +152,8 @@ def _hits(
             num_threads=threads,
             outfmt=5,
         )
-
         if seqids is not None:
-            # write down sequence IDs to keep while running BLASTn
-            seqids_file = ctx << temppath(suffix=".pacc")
-            with open(seqid_file, "w") as f:
-                f.writelines(["{}\n".format(x) for x in seqids])
-
-            # convert the IDs to an alias file with `blastdb_aliastool`
-            seqalias_file = ctx << temppath(suffix=".pacc.bsl")
-            args = [
-                "blastdb_aliastool",
-                "-seqid_file_in",
-                fspath(seqid_file),
-                "-seqid_db",
-                fspath(reference),
-                "-seqid_dbtype",
-                "nucl",
-                "-seqid_file_out",
-                seqalias_file,
-            ]
-            try:
-                proc = subprocess.run(args, stdout=PIPE, stderr=PIPE)
-                proc.check_returncode()
-            except subprocess.CalledProcessError as error:
-                raise RuntimeError(proc.stderr or proc.stdout) from error
-
-            # use the alias file as a seqidlist
-            blastn_args["seqidlist"] = seqalias_file
+            blastn_args["seqidlist"] = ctx << _seqidlist(seqids)
 
         cmd = BlastN(**blastn_args)
         args = shlex.split(str(cmd))
