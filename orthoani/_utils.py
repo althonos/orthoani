@@ -52,14 +52,14 @@ class BlockIterator(Generic[_S], Iterator[_S]):
 
 
 @contextlib.contextmanager
-def temppath(suffix: str = "") -> Iterator[Path]:
+def temppath(prefix: str = "orthoani", suffix: str = "") -> Iterator[Path]:
     """Get a context manager that returns a path to a temporary file.
 
     The file is created when the context is entered, and deleted when the
     context is exited.
     """
     try:
-        temp = tempfile.NamedTemporaryFile(mode="w", suffix=suffix)
+        temp = tempfile.NamedTemporaryFile(mode="w", prefix=prefix, suffix=suffix)
         yield Path(temp.name)
     finally:
         temp.close()
