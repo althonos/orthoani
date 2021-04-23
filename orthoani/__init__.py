@@ -98,7 +98,7 @@ def _database(reference: "PathLike[str]") -> Iterator[None]:
     except subprocess.CalledProcessError as error:
         raise RuntimeError(proc.stderr) from error
     finally:
-        for ext in "nhr", "nin", "nsq":
+        for ext in "nhr", "nin", "nsq", "ndb", "nog", "nos", "not", "ntf", "nto":
             path = os.path.extsep.join([fspath(reference), ext])
             if os.path.exists(path):
                 os.remove(path)
