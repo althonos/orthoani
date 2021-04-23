@@ -73,7 +73,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     except Exception as e:
         if args.traceback:
             print(
-                better_exceptions.format_exception(type(e), e, e.__traceback__),
+                "".join(
+                    better_exceptions.format_exception(type(e), e, e.__traceback__)
+                ),
                 file=sys.stderr,
             )
         else:
