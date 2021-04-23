@@ -1,8 +1,10 @@
 import os
 import glob
 import pathlib
-import unittest
+import shutil
 import tempfile
+import unittest
+from unittest import mock
 
 try:
     from os import fspath
@@ -16,15 +18,28 @@ import orthoani
 
 
 class TestOrthoani(unittest.TestCase):
+
+    assertEmpty = unittest.TestCase.assertFalse
+
     @classmethod
     def setUpClass(cls):
         cls.data = pathlib.Path(__file__).parent / "data"
         cls.r1, cls.r2 = map(lambda p: read(fspath(p), "fasta"), cls.data.glob("1852379.*.fna"))
 
+    def setUp(self):
+        self.sandbox = tempfile.mkdtemp()
+        self._sandbox_mock = mock.patch.object(tempfile, "tempdir", new=self.sandbox)
+        self._sandbox_mock.__enter__()
+
+    def tearDown(self):
+        self._sandbox_mock.__exit__(None, None, None)
+        shutil.rmtree(self.sandbox)
+
     def test_orthoani_single(self):
         # check the score we get is the same as the OrthoANI Java implementation
         ani = orthoani.orthoani(self.r1, self.r2)
         self.assertAlmostEqual(ani, 0.5725)
+        self.assertEmpty(os.listdir(self.sandbox))
 
     def test_orthoani_pairwise(self):
         mapping = orthoani.orthoani_pairwise([self.r1, self.r2])
@@ -32,6 +47,7 @@ class TestOrthoani(unittest.TestCase):
         self.assertAlmostEqual(mapping[self.r2.id, self.r1.id], 0.5725)
         self.assertAlmostEqual(mapping[self.r1.id, self.r1.id], 1.0)
         self.assertAlmostEqual(mapping[self.r2.id, self.r2.id], 1.0)
+        self.assertEmpty(os.listdir(self.sandbox))
 
 
 class TestChop(unittest.TestCase):

@@ -9,7 +9,6 @@ import os
 import multiprocessing.pool
 import shlex
 import subprocess
-import tempfile
 from subprocess import PIPE, DEVNULL
 from typing import Dict, List, Iterator, Iterable, Tuple, Union
 
