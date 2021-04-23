@@ -35,6 +35,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v1
+    - name: Install BLAST+ binaries
+      run: sudo apt-get install ncbi-blast+
     - name: Setup Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
