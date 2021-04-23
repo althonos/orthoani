@@ -1,7 +1,7 @@
 """Simple CLI interface to the OrthoANI algorithm.
 """
 import argparse
-import multiprocessing
+import os
 import signal
 import sys
 import typing
@@ -36,7 +36,7 @@ def argument_parser() -> argparse.ArgumentParser:
         "-j",
         "--jobs",
         help="the number of threads to use for BLASTn",
-        default=multiprocessing.cpu_count(),
+        default=os.cpu_count(),
         type=int,
     )
     parser.add_argument(
