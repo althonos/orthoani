@@ -2,7 +2,7 @@
 
 *A Python implementation of the [OrthoANI](https://doi.org/10.1099/ijsem.0.000760) algorithm for nucleotide identity measurement.*
 
-[![TravisCI](https://img.shields.io/travis/com/althonos/orthoani/master?logo=travis&maxAge=600&style=flat-square)](https://travis-ci.com/althonos/orthoani/branches)
+[![Actions](https://img.shields.io/github/workflow/status/althonos/orthoani/Test/master?logo=github&style=flat-square&maxAge=300)](https://github.com/althonos/orthoani/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&maxAge=2678400)](https://choosealicense.com/licenses/mit/)
 [![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/orthoani/)
 [![Coverage](https://img.shields.io/codecov/c/gh/althonos/orthoani?style=flat-square&maxAge=3600)](https://codecov.io/gh/althonos/orthoani/)
