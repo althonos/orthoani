@@ -37,16 +37,17 @@ class BlockIterator(Generic[_S], Iterator[_S]):
     """
 
     def __init__(self, data: _S, blocksize: int):  # noqa: D105, D107
-        self.data = data[:]
+        self.data = data
         self.blocksize = blocksize
+        self.cursor = 0
 
     def __iter__(self) -> "BlockIterator[_S]":  # noqa: D105
         return self
 
     def __next__(self) -> _S:  # noqa: D105
-        if len(self.data) > self.blocksize:
-            block = self.data[: self.blocksize]
-            self.data = self.data[self.blocksize :]
+        if self.cursor + self.blocksize < len(self.data):
+            block = self.data[self.cursor : self.cursor + self.blocksize]
+            self.cursor += self.blocksize
             return block  # type: ignore
         raise StopIteration
 
