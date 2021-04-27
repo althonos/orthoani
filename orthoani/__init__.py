@@ -149,7 +149,7 @@ def _hits(
             '-penalty', '-1',
             '-reward', '1',
             '-num_alignments', '1',
-            '-outfmt', '6 qseqid sseqid length nident pident',
+            '-outfmt', '6 qseqid sseqid length pident',
         ]
         if seqids is not None:
             args.extend(["-seqidlist", ctx << _seqidlist(seqids)])
@@ -161,18 +161,14 @@ def _hits(
             raise RuntimeError(proc.stderr or proc.stdout) from error
 
     # group alignments together by query/ref couple
-    lengths, nidents = collections.defaultdict(list), collections.defaultdict(list)
+    pidents = collections.defaultdict(list)
     for line in proc.stdout.splitlines():
-        qseqid, sseqid, length, nident = line.decode().split("\t")
+        qseqid, sseqid, length, pident = line.decode().split("\t")
         if int(length) >= 0.35 * blocksize:
-            nidents[qseqid, sseqid].append(decimal.Decimal(nident))
-            lengths[qseqid, sseqid].append(decimal.Decimal(length))
+            pidents[qseqid, sseqid].append(decimal.Decimal(pident))
 
-    # compute final hit identity
-    return {
-        (q, r) : sum(nidents[q, r]) / sum(lengths[q, r])
-        for q, r in lengths
-    }
+    # return all HSP identities
+    return pidents
 
 
 def _orthoani(
@@ -204,13 +200,14 @@ def _orthoani(
     )
 
     # find reciprocical hits
-    hits = {k: v for k, v in forward if (v, k) in backward}
+    hits = {(k, v) for k, v in forward if (v, k) in backward}
 
-    ani = decimal.Decimal(0)
-    for hit_q, hit_r in hits.items():
-        ani += backward[hit_r, hit_q] + forward[hit_q, hit_r]
-    if hits:
-        ani /= len(hits) * 2
+    ani, hsps = decimal.Decimal(0), 0
+    for hit_q, hit_r in hits:
+        ani += sum(backward[hit_r, hit_q]) + sum(forward[hit_q, hit_r])
+        hsps += len(backward[hit_r, hit_q]) + len(forward[hit_q, hit_r])
+    if hsps:
+        ani /= hsps * 100
     return float(ani)
 
 
