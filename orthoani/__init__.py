@@ -154,6 +154,7 @@ def _hits(
             '-reward', '1',
             '-num_alignments', '1',
             '-outfmt', '6 qseqid sseqid length pident',
+            '-num_threads', str(threads),
         ]
         if seqids is not None:
             args.extend(["-seqidlist", ctx << _seqidlist(seqids)])
