@@ -6,7 +6,6 @@ import contextlib
 import decimal
 import io
 import os
-import multiprocessing.pool
 import shlex
 import subprocess
 from subprocess import PIPE, DEVNULL
@@ -218,7 +217,7 @@ def orthoani(
     reference: Union[SeqRecord, Iterable[SeqRecord]],
     query: Union[SeqRecord, Iterable[SeqRecord]],
     blocksize: int = 1020,
-    threads: int = multiprocessing.cpu_count(),
+    threads: int = os.cpu_count(),
 ) -> float:
     """Compute the OrthoANI score for two sequence records.
 
@@ -260,7 +259,7 @@ def orthoani(
 def orthoani_pairwise(
     genomes: List[SeqRecord],
     blocksize: int = 1020,
-    threads: int = multiprocessing.cpu_count(),
+    threads: int = os.cpu_count(),
 ) -> Dict[Tuple[str, str], float]:
     """Compute pairwise OrthoANI scores for a list of sequence records.
 
