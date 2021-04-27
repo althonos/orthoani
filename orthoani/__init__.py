@@ -138,25 +138,22 @@ def _hits(
     """Compute the hits from ``query`` to ``reference``."""
     # run BLASTn
     with ExitStack() as ctx:
-        # prepare BLASTn arguments
-        blastn_args = dict(
-            task="blastn",
-            query=fspath(query),
-            db=fspath(reference),
-            evalue=1e-5,
-            dust="no",
-            xdrop_gap=150,
-            penalty=-1,
-            reward=1,
-            max_target_seqs=1,
-            num_threads=threads,
-            outfmt="6 qseqid sseqid length nident",
-        )
+        args = [
+            'blastn',
+            '-query', fspath(query),
+            '-db', fspath(reference),
+            '-task', 'blastn',
+            '-evalue', '1e-15',
+            '-xdrop_gap', '150',
+            '-dust', 'no',
+            '-penalty', '-1',
+            '-reward', '1',
+            '-num_alignments', '1',
+            '-outfmt', '6 qseqid sseqid length nident pident',
+        ]
         if seqids is not None:
-            blastn_args["seqidlist"] = ctx << _seqidlist(seqids)
+            args.extend(["-seqidlist", ctx << _seqidlist(seqids)])
 
-        cmd = BlastN(**blastn_args)
-        args = shlex.split(str(cmd))
         try:
             proc = subprocess.run(args, stdout=PIPE, stderr=PIPE)
             proc.check_returncode()
