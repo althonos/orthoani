@@ -19,9 +19,6 @@ except ImportError:  # python 3.5
 
 import Bio.SeqIO
 from Bio.SeqRecord import SeqRecord
-from Bio.Blast import NCBIXML
-from Bio.Blast.Applications import NcbiblastnCommandline as BlastN
-from Bio.Blast.Applications import NcbimakeblastdbCommandline as MakeBlastDB
 
 from ._utils import ExitStack, BlockIterator, temppath
 
