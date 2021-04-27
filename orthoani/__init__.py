@@ -103,7 +103,9 @@ def _database(reference: "PathLike[str]") -> Iterator[None]:
 
 
 def _chop(
-    record: Union[SeqRecord, Iterable[SeqRecord]], dest: "PathLike[str]", blocksize: int
+    record: Union[SeqRecord, Iterable[SeqRecord]],
+    dest: "PathLike[str]",
+    blocksize: int
 ) -> None:
     """Chop a single record into blocks and write it to ``dest``.
 
@@ -134,7 +136,7 @@ def _hits(
     seqids: "Optional[List[str]]" = None,
 ) -> Dict[Tuple[str, str], decimal.Decimal]:
     """Compute the hits from ``query`` to ``reference``."""
-
+    # run BLASTn
     with ExitStack() as ctx:
         # prepare BLASTn arguments
         blastn_args = dict(
@@ -148,7 +150,7 @@ def _hits(
             reward=1,
             max_target_seqs=1,
             num_threads=threads,
-            outfmt=5,
+            outfmt="6 qseqid sseqid length nident",
         )
         if seqids is not None:
             blastn_args["seqidlist"] = ctx << _seqidlist(seqids)
@@ -161,17 +163,19 @@ def _hits(
         except subprocess.CalledProcessError as error:
             raise RuntimeError(proc.stderr or proc.stdout) from error
 
-    hits = {}
-    for record in NCBIXML.parse(io.BytesIO(proc.stdout)):
-        if record.alignments:
-            nid = length = decimal.Decimal(0)
-            for hsp in record.alignments[0].hsps:
-                if hsp.align_length >= 0.35 * blocksize:
-                    nid += hsp.identities
-                    length += hsp.align_length
-            if length > 0:
-                hits[record.query, record.alignments[0].hit_id] = nid / length
-    return hits
+    # group alignments together by query/ref couple
+    lengths, nidents = collections.defaultdict(list), collections.defaultdict(list)
+    for line in proc.stdout.splitlines():
+        qseqid, sseqid, length, nident = line.decode().split("\t")
+        if int(length) >= 0.35 * blocksize:
+            nidents[qseqid, sseqid].append(decimal.Decimal(nident))
+            lengths[qseqid, sseqid].append(decimal.Decimal(length))
+
+    # compute final hit identity
+    return {
+        (q, r) : sum(nidents[q, r]) / sum(lengths[q, r])
+        for q, r in lengths
+    }
 
 
 def _orthoani(
