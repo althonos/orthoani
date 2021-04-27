@@ -120,12 +120,12 @@ def _chop(
         record = [record]
     with open(fspath(dest), mode="w") as d:
         for r in record:
-            if len(r) < blocksize:
-                r.seq += "N" * (blocksize - len(r) + 1)
             for i, block in enumerate(BlockIterator(r, blocksize)):
-                block.id = "{}_{}".format(r.id, i)
-                block.description = ""
-                Bio.SeqIO.write(block, d, "fasta")
+                n_count = block.seq.count("N") + block.seq.count("n")
+                if n_count / len(block) < 0.8:
+                    block.id = "{}_{}".format(r.id, i)
+                    block.description = ""
+                    Bio.SeqIO.write(block, d, "fasta")
 
 
 def _hits(
