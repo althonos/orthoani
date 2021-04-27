@@ -8,6 +8,7 @@ import io
 import os
 import shlex
 import subprocess
+import typing
 from subprocess import PIPE, DEVNULL
 from typing import Dict, List, Iterator, Iterable, Tuple, Union
 
@@ -17,10 +18,12 @@ except ImportError:  # python 3.5
     from pathlib import Path as PathLike  # type: ignore
     from builtins import str as fspath  # type: ignore
 
-import Bio.SeqIO
-from Bio.SeqRecord import SeqRecord
-
 from ._utils import ExitStack, BlockIterator, temppath
+
+if typing.TYPE_CHECKING:
+    from Bio.SeqRecord import SeqRecord
+
+
 
 __all__ = ["orthoani", "orthoani_pairwise"]
 __author__ = "Martin Larralde <martin.larralde@embl.de>"
@@ -100,7 +103,7 @@ def _database(reference: "PathLike[str]") -> Iterator[None]:
 
 
 def _chop(
-    record: Union[SeqRecord, Iterable[SeqRecord]],
+    record: Union["SeqRecord", Iterable["SeqRecord"]],
     dest: "PathLike[str]",
     blocksize: int
 ) -> None:
@@ -113,16 +116,20 @@ def _chop(
         blocksize (`int`): The size of block, in nucleotides.
 
     """
-    if isinstance(record, SeqRecord):
+    if hasattr(record, "id") and hasattr(record, "seq"):
         record = [record]
     with open(fspath(dest), mode="w") as d:
         for r in record:
             for i, block in enumerate(BlockIterator(r, blocksize)):
+                # skip blocks with more than 80% unknown nucleotides
                 n_count = block.seq.count("N") + block.seq.count("n")
-                if n_count / len(block) < 0.8:
-                    block.id = "{}_{}".format(r.id, i)
-                    block.description = ""
-                    Bio.SeqIO.write(block, d, "fasta")
+                if n_count / len(block) >= 0.8:
+                    continue
+                # write FASTA with 80 characters per line
+                d.write(">{}_{}\n".format(r.id, i))
+                for i in range(0, len(block), 80):
+                    d.write(str(block.seq[i:i+80]))
+                    d.write("\n")
 
 
 def _hits(
@@ -209,8 +216,8 @@ def _orthoani(
 
 
 def orthoani(
-    reference: Union[SeqRecord, Iterable[SeqRecord]],
-    query: Union[SeqRecord, Iterable[SeqRecord]],
+    reference: Union["SeqRecord", Iterable["SeqRecord"]],
+    query: Union["SeqRecord", Iterable["SeqRecord"]],
     blocksize: int = 1020,
     threads: int = os.cpu_count(),
 ) -> float:
@@ -252,7 +259,7 @@ def orthoani(
 
 
 def orthoani_pairwise(
-    genomes: List[SeqRecord],
+    genomes: List["SeqRecord"],
     blocksize: int = 1020,
     threads: int = os.cpu_count(),
 ) -> Dict[Tuple[str, str], float]:
