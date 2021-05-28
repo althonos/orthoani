@@ -28,7 +28,7 @@ if typing.TYPE_CHECKING:
 __all__ = ["orthoani", "orthoani_pairwise"]
 __author__ = "Martin Larralde <martin.larralde@embl.de>"
 __license__ = "MIT"
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 
 @contextlib.contextmanager

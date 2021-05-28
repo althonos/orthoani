@@ -5,7 +5,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/orthoani/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/althonos/orthoani/compare/v0.5.0...HEAD
+
+## [v0.5.0] - 2021-05-28
+[v0.5.0]: https://github.com/althonos/orthoani/compare/v0.4.0...v0.5.0
+### Fixed
+- Exception messages not properly rendering with `--traceback` enabled.
+- Use `os.cpu_count` instead of `multiprocessing.cpu_count` where applicable.
+- Make `BlockIterator` zero-copy using indices instead of slices.
+### Changed
+- Use `seqidlist` to reduce number of blocks compared in backward search.
+- Switch to use BLASTdb v5 (instead of v4 previously).
+- Prefix temporary files with `orthoani` prefix.
+- Skip blocks containing more than 80% unknown nucleotides like in original implementation.
+- Average ANI values based on HSPs instead of reciprocical blocks like in original implementation.
 
 ## [v0.4.0] - 2020-06-26
 [v0.4.0]: https://github.com/althonos/orthoani/compare/v0.3.2...v0.4.0
