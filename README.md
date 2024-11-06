@@ -1,24 +1,24 @@
-# OrthoANI [![Stars](https://img.shields.io/github/stars/althonos/orthoani.svg?style=social&maxAge=3600&label=Star)](https://github.com/althonos/orthoani/stargazers)
+# (Py)OrthoANI [![Stars](https://img.shields.io/github/stars/althonos/orthoani.svg?style=social&maxAge=3600&label=Star)](https://github.com/althonos/orthoani/stargazers)
 
 *A Python implementation of the [OrthoANI](https://doi.org/10.1099/ijsem.0.000760) algorithm for nucleotide identity measurement.*
 
-[![Actions](https://img.shields.io/github/workflow/status/althonos/orthoani/Test/master?logo=github&style=flat-square&maxAge=300)](https://github.com/althonos/orthoani/actions)
+[![Actions](https://img.shields.io/github/actions/workflow/status/althonos/orthoani/test.yml?branch=main&logo=github&style=flat-square&maxAge=300)](https://github.com/althonos/orthoani/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&maxAge=2678400)](https://choosealicense.com/licenses/mit/)
 [![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/orthoani/)
 [![Coverage](https://img.shields.io/codecov/c/gh/althonos/orthoani?style=flat-square&maxAge=3600)](https://codecov.io/gh/althonos/orthoani/)
-[![Sanity](https://img.shields.io/codacy/grade/4a427dadd1864c93ab9a55cb34c389a0.svg?style=flat-square&maxAge=3600)](https://codacy.com/app/althonos/orthoani)
 [![PyPI](https://img.shields.io/pypi/v/orthoani.svg?style=flat-square&maxAge=600)](https://pypi.org/project/orthoani)
 [![Wheel](https://img.shields.io/pypi/wheel/orthoani.svg?style=flat-square&maxAge=3600)](https://pypi.org/project/orthoani/#files)
 [![Python Versions](https://img.shields.io/pypi/pyversions/orthoani.svg?style=flat-square&maxAge=600)](https://pypi.org/project/orthoani/#files)
 [![Python Implementations](https://img.shields.io/pypi/implementation/orthoani.svg?style=flat-square&maxAge=600)](https://pypi.org/project/orthoani/#files)
-[![Changelog](https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/orthoani/blob/master/CHANGELOG.md)
+[![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/orthoani/)
 [![GitHub issues](https://img.shields.io/github/issues/althonos/orthoani.svg?style=flat-square&maxAge=600)](https://github.com/althonos/orthoani/issues)
-[![Downloads](https://img.shields.io/badge/dynamic/json?style=flat-square&color=303f9f&maxAge=86400&label=downloads&query=%24.total_downloads&url=https%3A%2F%2Fapi.pepy.tech%2Fapi%2Fprojects%2Forthoani)](https://pepy.tech/project/orthoani)
+[![Changelog](https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/orthoani/blob/master/CHANGELOG.md)
+[![Downloads](https://img.shields.io/pypi/dm/orthoani?style=flat-square&color=303f9f&maxAge=86400&label=downloads)](https://pepy.tech/project/orthoani)
 
 
 ## 🗺️ Overview
 
-OrthoANI is a metric proposed by [Lee *et al.*](https://doi.org/10.1099/ijsem.0.000760)
+OrthoANI is a metric proposed by Lee *et al.*[\[1\]](#ref1)
 in 2016 to improve computation of Average Nucleotide Identity. It uses
 [BLASTn](https://en.wikipedia.org/wiki/BLAST_(biotechnology)) to find orthologous
 blocks in a pair of sequences, and then computes the average identity only
@@ -28,8 +28,9 @@ considering alignments of reciprocal orthologs.
 
 This project is a reimplementation of the closed-source Java implementation
 provided by the authors on [`ezbiocloud.net`](https://www.ezbiocloud.net/sw/oat).
-It relies on [Biopython](https://biopython.org/) to handle the I/O and the
-interaction with the BLAST+ binaries.
+It relies on [Biopython](https://biopython.org/) to handle the I/O, and calls
+the BLAST+ binaries using the `subprocess` module of the Python standard 
+library.
 
 
 ## 🔧 Installing
@@ -93,3 +94,7 @@ the [original OrthoANI authors](http://www.chunlab.com/). It was developed by
 [Martin Larralde](https://github.com/althonos/orthoani) during his PhD project
 at the [European Molecular Biology Laboratory](https://www.embl.de/) in
 the [Zeller team](https://github.com/zellerlab).*
+
+## 📚 References
+
+- <a id="ref1">\[1\]</a> Imchang Lee, Yeong Ouk Kim, Sang-Cheol Park and Jongsik Chun. *OrthoANI: An improved algorithm and software for calculating average nucleotide identity* (2016). International Journal of Systematic and Evolutionary Microbiology. [doi:10.1099/ijsem.0.000760](https://doi.org/10.1099/ijsem.0.000760). [PMID:26585518](https://pubmed.ncbi.nlm.nih.gov/26585518/).
