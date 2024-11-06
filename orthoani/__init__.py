@@ -9,20 +9,14 @@ import os
 import shlex
 import subprocess
 import typing
+from os import PathLike, fspath
 from subprocess import PIPE, DEVNULL
 from typing import Dict, List, Iterator, Iterable, Tuple, Union
-
-try:
-    from os import PathLike, fspath
-except ImportError:  # python 3.5
-    from pathlib import Path as PathLike  # type: ignore
-    from builtins import str as fspath  # type: ignore
 
 from ._utils import ExitStack, BlockIterator, temppath
 
 if typing.TYPE_CHECKING:
     from Bio.SeqRecord import SeqRecord
-
 
 
 __all__ = ["orthoani", "orthoani_pairwise"]
