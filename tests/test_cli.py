@@ -6,11 +6,7 @@ import unittest
 import subprocess
 import sys
 from unittest import mock
-
-try:
-    from os import fspath
-except ImportError:
-    from builtins import str as fspath
+from os import fspath
 
 from Bio.SeqIO import read
 
@@ -43,7 +39,7 @@ class TestCli(unittest.TestCase):
         args = ["-q", self.p1, "-r", self.p2]
         retcode = self.shell(args)
         self.assertEqual(retcode, 0)
-        self.assertEqual(self.stdout.getvalue(), "0.5725\n")
+        self.assertEqual(self.stdout.getvalue(), "57.25\n")
 
     def test_return_code(self):
         args = ["-q", fspath(self.data), "-r", self.p2]

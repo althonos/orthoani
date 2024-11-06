@@ -5,11 +5,7 @@ import shutil
 import tempfile
 import unittest
 from unittest import mock
-
-try:
-    from os import fspath
-except ImportError:
-    from builtins import str as fspath
+from os import fspath
 
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqIO import read, parse
