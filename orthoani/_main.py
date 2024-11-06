@@ -7,9 +7,13 @@ import sys
 import typing
 from typing import Optional, List
 
-import better_exceptions
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqIO import parse
+
+try:
+    import better_exceptions
+except ImportError:
+    better_exceptions = None
 
 from . import orthoani, __name__, __version__
 
@@ -72,7 +76,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         return -signal.SIGINT
 
     except Exception as e:
-        if args.traceback:
+        if args.traceback and better_exceptions is not None:
             print(
                 "".join(
                     better_exceptions.format_exception(type(e), e, e.__traceback__)
