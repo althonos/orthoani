@@ -31,6 +31,33 @@ __license__ = "MIT"
 __version__ = "0.5.0"
 
 
+class BlastRow(typing.NamedTuple):
+    query: str
+    target: str
+    identity: int
+    alignment_length: int
+    mismatches: int
+    evalue: float
+    bitscore: float
+
+    @classmethod
+    def parse(cls, line: str):
+        cols = line.split()
+        return cls(
+            cols[0],
+            cols[1],
+            float(cols[2]),
+            int(cols[3]),
+            int(cols[4]),
+            float(cols[10]),
+            float(cols[11]),
+        )
+
+    @property
+    def identity_length(self):
+        return self.mismatches - self.alignment_length
+
+
 @contextlib.contextmanager
 def _seqidlist(seqids: "Iterable[str]") -> "Iterator[PathLike[str]]":
     """Get a context manager to manage a sequence IDs file.
@@ -96,7 +123,7 @@ def _database(reference: "PathLike[str]") -> Iterator[None]:
     except subprocess.CalledProcessError as error:
         raise RuntimeError(proc.stderr) from error
     finally:
-        for ext in "nhr", "nin", "nsq", "ndb", "nog", "nos", "not", "ntf", "nto":
+        for ext in "nhr", "nin", "nsq", "ndb", "nog", "nos", "not", "ntf", "nto", "njs":
             path = os.path.extsep.join([fspath(reference), ext])
             if os.path.exists(path):
                 os.remove(path)
@@ -105,7 +132,8 @@ def _database(reference: "PathLike[str]") -> Iterator[None]:
 def _chop(
     record: Union["SeqRecord", Iterable["SeqRecord"]],
     dest: "PathLike[str]",
-    blocksize: int
+    blocksize: int,
+    width: int = 80,
 ) -> None:
     """Chop a single record into blocks and write it to ``dest``.
 
@@ -127,8 +155,8 @@ def _chop(
                     continue
                 # write FASTA with 80 characters per line
                 d.write(">{}_{}\n".format(r.id, i))
-                for i in range(0, len(block), 80):
-                    d.write(str(block.seq[i:i+80]))
+                for j in range(0, len(block), width):
+                    d.write(str(block.seq[j:j+width]).upper())
                     d.write("\n")
 
 
@@ -138,7 +166,8 @@ def _hits(
     blocksize: int,
     threads: int,
     seqids: "Optional[List[str]]" = None,
-) -> Dict[Tuple[str, str], decimal.Decimal]:
+    min_length: int = 357,
+) -> List[BlastRow]:
     """Compute the hits from ``query`` to ``reference``."""
     # run BLASTn
     with ExitStack() as ctx:
@@ -153,12 +182,11 @@ def _hits(
             '-penalty', '-1',
             '-reward', '1',
             '-num_alignments', '1',
-            '-outfmt', '6 qseqid sseqid length pident',
+            '-outfmt', '7',
             '-num_threads', str(threads),
         ]
         if seqids is not None:
             args.extend(["-seqidlist", ctx << _seqidlist(seqids)])
-
         try:
             proc = subprocess.run(args, stdout=PIPE, stderr=PIPE)
             proc.check_returncode()
@@ -166,14 +194,21 @@ def _hits(
             raise RuntimeError(proc.stderr or proc.stdout) from error
 
     # group alignments together by query/ref couple
-    pidents = collections.defaultdict(list)
+    rows = []
+    count = 0
     for line in proc.stdout.splitlines():
-        qseqid, sseqid, length, pident = line.decode().split("\t")
-        if int(length) >= 0.35 * blocksize:
-            pidents[qseqid, sseqid].append(decimal.Decimal(pident))
+        line = line.decode()
+        if line.startswith("# Query: "):
+            count = 0
+        elif not line.startswith("#"):
+            if count == 0:
+                row = BlastRow.parse(line)
+                if row.alignment_length >= 0.35 * blocksize:
+                    rows.append(row)
+            count += 1
 
     # return all HSP identities
-    return pidents
+    return rows
 
 
 def _orthoani(
@@ -193,7 +228,12 @@ def _orthoani(
 
     """
     # compute forward hits: every sequence is used
-    forward = _hits(query, reference, blocksize=blocksize, threads=threads)
+    forward = _hits(
+        query,
+        reference,
+        blocksize=blocksize,
+        threads=threads
+    )
 
     # compute forward hits: only sequences that got a forward hit are used
     backward = _hits(
@@ -201,19 +241,23 @@ def _orthoani(
         query,
         blocksize=blocksize,
         threads=threads,
-        seqids={k for k, v in forward},
+        seqids=list(f),
     )
 
-    # find reciprocical hits
-    hits = {(k, v) for k, v in forward if (v, k) in backward}
+    # listMerge
+    merged = []
+    for i, a in enumerate(forward):
+        for j, b in enumerate(backward):
+            if a.query == b.target and a.target == b.query:
+                merged.append( decimal.Decimal(a.identity) + decimal.Decimal(b.identity) )
+                break
 
-    ani, hsps = decimal.Decimal(0), 0
-    for hit_q, hit_r in hits:
-        ani += sum(backward[hit_r, hit_q]) + sum(forward[hit_q, hit_r])
-        hsps += len(backward[hit_r, hit_q]) + len(forward[hit_q, hit_r])
-    if hsps:
-        ani /= hsps * 100
-    return float(ani)
+    # getMeans
+    if len(merged) == 0:
+        return 0.0
+
+    avg_bd = sum(merged) / (len(merged) * 2 * 100)
+    return float(avg_bd)
 
 
 def orthoani(
