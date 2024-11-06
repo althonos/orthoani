@@ -235,7 +235,6 @@ def _orthoani(
         query,
         blocksize=blocksize,
         threads=threads,
-        seqids=list(f),
     )
 
     # listMerge
