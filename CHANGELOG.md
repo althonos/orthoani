@@ -5,7 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/orthoani/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/althonos/orthoani/compare/v0.6.0...HEAD
+
+## [v0.6.0] - 2024-11-06
+[v0.6.0]: https://github.com/althonos/orthoani/compare/v0.5.0...v0.6.0
+### Changed
+- Make `better-exceptions` an optional dependency.
+### Fixed
+- Discrepancy with OrthoANI values for high similarity genomes ([#2](https://github.com/althonos/orthoani/issues)).
+- Remaining files of temporary BLAST databases not being removed.
+### Removed
+- Support for Python 3.5.
 
 ## [v0.5.0] - 2021-05-28
 [v0.5.0]: https://github.com/althonos/orthoani/compare/v0.4.0...v0.5.0
