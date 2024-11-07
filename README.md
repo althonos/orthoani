@@ -62,7 +62,7 @@ ani = orthoani.orthoani(genome_1, genome_2)
 interface:
 ```console
 $ orthoani -q sequence1.fa -r sequence2.fa
-0.5725
+57.25
 ```
 
 
