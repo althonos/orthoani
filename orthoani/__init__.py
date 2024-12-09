@@ -169,6 +169,10 @@ def _hits(
     import pyncbitk.algo
     from pyncbitk.objects.seqset import BioSeqSet
     from pyncbitk.objtools import DatabaseReader, FastaReader
+    from pyncbitk.algo import SearchQuery, SearchQueryVector
+    from pyncbitk.objects.seqloc import WholeSeqLoc
+
+    manager = pyncbitk.objmgr.ObjectManager()
 
     blastn = pyncbitk.algo.BlastN(
         evalue=1e-15,
@@ -179,9 +183,25 @@ def _hits(
         max_target_sequences=1,
     )
 
-    query_db = BioSeqSet(DatabaseReader(query, type="nucleotide").values())
-    ref_db = DatabaseReader(reference, type="nucleotide")
-    results = blastn.run(query_db, ref_db, scan_mode=True)            
+    with manager.scope() as scope:
+        query_ids = []
+        target_ids = []
+
+        for seq in FastaReader(query):
+            scope.add_bioseq(seq)
+            query_ids.append(SearchQuery(WholeSeqLoc(seq.id), scope))
+
+        for seq in FastaReader(reference):
+            scope.add_bioseq(seq)
+            target_ids.append(SearchQuery(WholeSeqLoc(seq.id), scope))
+
+        # query_db = BioSeqSet(, split=False))
+        # ref_db = BioSeqSet(FastaReader(reference, split=False))
+        results = blastn.run(
+            SearchQueryVector(query_ids),
+            SearchQueryVector(target_ids),
+            scan_mode=True
+        )
 
     rows = []
     for result in results:
@@ -189,60 +209,17 @@ def _hits(
         if best is not None and best.alignment_length >= 0.35 * blocksize:
             rows.append(
                 BlastRow(
-                    query=result.query_id.object_id.value, 
-                    target=best[1].id.object_id.value, 
-                    alignment_length=best.alignment_length, 
-                    evalue=best.evalue, 
+                    query=result.query_id.object_id.value,
+                    target=best[1].id.object_id.value,
+                    alignment_length=best.alignment_length,
+                    evalue=best.evalue,
                     bitscore=best.bitscore,
-                    # NOTE: rounding to preserve same results as original OrthoANI, 
+                    # NOTE: rounding to preserve same results as original OrthoANI,
                     # which uses BLAST outfmt 7 tables, which round identity
-                    identity=round(best.percent_identity, 3),  
+                    identity=round(best.percent_identity, 3),
                 )
             )
     return rows
-
-    # # run BLASTn
-    # with ExitStack() as ctx:
-    #     args = [
-    #         'blastn',
-    #         '-query', fspath(query),
-    #         '-db', fspath(reference),
-    #         '-task', 'blastn',
-    #         '-evalue', '1e-15',
-    #         '-xdrop_gap', '150',
-    #         '-dust', 'no',
-    #         '-penalty', '-1',
-    #         '-reward', '1',
-    #         '-num_alignments', '1',
-    #         '-outfmt', '7',
-    #         '-num_threads', str(threads),
-    #     ]
-    #     if seqids is not None:
-    #         args.extend(["-seqidlist", ctx << _seqidlist(seqids)])
-    #     try:
-    #         proc = subprocess.run(args, stdout=PIPE, stderr=PIPE)
-    #         proc.check_returncode()
-    #     except subprocess.CalledProcessError as error:
-    #         raise RuntimeError(proc.stderr or proc.stdout) from error
-
-    # # group alignments together by query/ref couple
-    # rows = []
-    # count = 0
-    # for line in proc.stdout.splitlines():
-    #     line = line.decode()
-    #     if line.startswith("# Query: "):
-    #         count = 0
-    #     elif not line.startswith("#"):
-    #         if count == 0:
-    #             row = BlastRow.parse(line)
-    #             if row.alignment_length >= 0.35 * blocksize:
-    #                 rows.append(row)
-    #         count += 1
-
-    # # return all HSP identities
-    # # return rows
-    # return rows
-
 
 def _orthoani(
     query: "PathLike[str]", reference: "PathLike[str]", blocksize: int, threads: int
@@ -325,11 +302,11 @@ def orthoani(
         # make the chopped file and the database for the first sequence
         chopped_r = ctx << temppath(suffix=".fa")
         _chop(reference, chopped_r, blocksize=blocksize)
-        ctx << _database(chopped_r)
+        # ctx << _database(chopped_r)
         # make the chopped file and the database for the first sequence
         chopped_q = ctx << temppath(suffix=".fa")
         _chop(query, chopped_q, blocksize=blocksize)
-        ctx << _database(chopped_q)
+        # ctx << _database(chopped_q)
         # return the orthoani score
         ani = _orthoani(chopped_q, chopped_r, blocksize, threads)
     return ani
@@ -363,7 +340,7 @@ def orthoani_pairwise(
         for genome in genomes:
             chopped[genome.id] = ctx << temppath(suffix=".fa")
             _chop(genome, chopped[genome.id], blocksize=blocksize)
-            ctx << _database(chopped[genome.id])
+            # ctx << _database(chopped[genome.id])
         # query the results for each pair (using symmetricity)
         results = {}
         for i, g1 in enumerate(genomes):
