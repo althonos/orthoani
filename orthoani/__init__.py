@@ -13,6 +13,8 @@ from os import PathLike, fspath
 from subprocess import PIPE, DEVNULL
 from typing import Dict, List, Iterator, Iterable, Tuple, Union
 
+import pyncbitk
+
 from ._utils import ExitStack, BlockIterator, temppath
 
 if typing.TYPE_CHECKING:
@@ -30,7 +32,7 @@ class BlastRow(typing.NamedTuple):
     target: str
     identity: int
     alignment_length: int
-    mismatches: int
+    # mismatches: int
     evalue: float
     bitscore: float
 
@@ -42,14 +44,14 @@ class BlastRow(typing.NamedTuple):
             cols[1],
             float(cols[2]),
             int(cols[3]),
-            int(cols[4]),
+            # int(cols[4]),
             float(cols[10]),
             float(cols[11]),
         )
 
-    @property
-    def identity_length(self):
-        return self.mismatches - self.alignment_length
+    # @property
+    # def identity_length(self):
+    #     return self.mismatches - self.alignment_length
 
 
 @contextlib.contextmanager
@@ -163,46 +165,83 @@ def _hits(
     min_length: int = 357,
 ) -> List[BlastRow]:
     """Compute the hits from ``query`` to ``reference``."""
-    # run BLASTn
-    with ExitStack() as ctx:
-        args = [
-            'blastn',
-            '-query', fspath(query),
-            '-db', fspath(reference),
-            '-task', 'blastn',
-            '-evalue', '1e-15',
-            '-xdrop_gap', '150',
-            '-dust', 'no',
-            '-penalty', '-1',
-            '-reward', '1',
-            '-num_alignments', '1',
-            '-outfmt', '7',
-            '-num_threads', str(threads),
-        ]
-        if seqids is not None:
-            args.extend(["-seqidlist", ctx << _seqidlist(seqids)])
-        try:
-            proc = subprocess.run(args, stdout=PIPE, stderr=PIPE)
-            proc.check_returncode()
-        except subprocess.CalledProcessError as error:
-            raise RuntimeError(proc.stderr or proc.stdout) from error
 
-    # group alignments together by query/ref couple
+    import pyncbitk.algo
+    from pyncbitk.objects.seqset import BioSeqSet
+    from pyncbitk.objtools import DatabaseReader, FastaReader
+
+    blastn = pyncbitk.algo.BlastN(
+        evalue=1e-15,
+        xdrop_gap=150,
+        dust_filtering=False,
+        penalty=-1,
+        reward=1,
+        max_target_sequences=1,
+    )
+
+    query_db = BioSeqSet(DatabaseReader(query, type="nucleotide").values())
+    ref_db = DatabaseReader(reference, type="nucleotide")
+    results = blastn.run(query_db, ref_db, scan_mode=True)            
+
     rows = []
-    count = 0
-    for line in proc.stdout.splitlines():
-        line = line.decode()
-        if line.startswith("# Query: "):
-            count = 0
-        elif not line.startswith("#"):
-            if count == 0:
-                row = BlastRow.parse(line)
-                if row.alignment_length >= 0.35 * blocksize:
-                    rows.append(row)
-            count += 1
-
-    # return all HSP identities
+    for result in results:
+        best = next(iter(result.alignments), None)
+        if best is not None and best.alignment_length >= 0.35 * blocksize:
+            rows.append(
+                BlastRow(
+                    query=result.query_id.object_id.value, 
+                    target=best[1].id.object_id.value, 
+                    alignment_length=best.alignment_length, 
+                    evalue=best.evalue, 
+                    bitscore=best.bitscore,
+                    # NOTE: rounding to preserve same results as original OrthoANI, 
+                    # which uses BLAST outfmt 7 tables, which round identity
+                    identity=round(best.percent_identity, 3),  
+                )
+            )
     return rows
+
+    # # run BLASTn
+    # with ExitStack() as ctx:
+    #     args = [
+    #         'blastn',
+    #         '-query', fspath(query),
+    #         '-db', fspath(reference),
+    #         '-task', 'blastn',
+    #         '-evalue', '1e-15',
+    #         '-xdrop_gap', '150',
+    #         '-dust', 'no',
+    #         '-penalty', '-1',
+    #         '-reward', '1',
+    #         '-num_alignments', '1',
+    #         '-outfmt', '7',
+    #         '-num_threads', str(threads),
+    #     ]
+    #     if seqids is not None:
+    #         args.extend(["-seqidlist", ctx << _seqidlist(seqids)])
+    #     try:
+    #         proc = subprocess.run(args, stdout=PIPE, stderr=PIPE)
+    #         proc.check_returncode()
+    #     except subprocess.CalledProcessError as error:
+    #         raise RuntimeError(proc.stderr or proc.stdout) from error
+
+    # # group alignments together by query/ref couple
+    # rows = []
+    # count = 0
+    # for line in proc.stdout.splitlines():
+    #     line = line.decode()
+    #     if line.startswith("# Query: "):
+    #         count = 0
+    #     elif not line.startswith("#"):
+    #         if count == 0:
+    #             row = BlastRow.parse(line)
+    #             if row.alignment_length >= 0.35 * blocksize:
+    #                 rows.append(row)
+    #         count += 1
+
+    # # return all HSP identities
+    # # return rows
+    # return rows
 
 
 def _orthoani(
