@@ -11,9 +11,18 @@ import subprocess
 import typing
 from os import PathLike, fspath
 from subprocess import PIPE, DEVNULL
-from typing import Dict, List, Iterator, Iterable, Tuple, Union
+from typing import Dict, List, Iterator, Iterable, Tuple, Union, Sequence
 
-import pyncbitk
+import pyncbitk.algo
+import pyncbitk.objmgr
+from pyncbitk.algo import SearchQuery, SearchQueryVector
+from pyncbitk.objects.general import ObjectId
+from pyncbitk.objects.seqdata import IupacNaData
+from pyncbitk.objects.seqinst import ContinuousInst
+from pyncbitk.objects.seqloc import SeqId, LocalId, SeqLoc, SeqIntervalLoc, WholeSeqLoc
+from pyncbitk.objects.seq import BioSeq
+from pyncbitk.objects.seqset import BioSeqSet
+from pyncbitk.objtools import DatabaseReader, FastaReader
 
 from ._utils import ExitStack, BlockIterator, temppath
 
@@ -125,12 +134,22 @@ def _database(reference: "PathLike[str]") -> Iterator[None]:
                 os.remove(path)
 
 
+def _make_bioseq(
+    record: "SeqRecord",
+) -> "pyncbitk.objects.BioSeq":
+    return BioSeq(
+        ContinuousInst(IupacNaData(bytes(record.seq.upper()))),
+        # SeqId.parse(record.id),
+        LocalId(ObjectId(record.id)),
+    )
+
+
 def _chop(
     record: Union["SeqRecord", Iterable["SeqRecord"]],
-    dest: "PathLike[str]",
+    scope: "pyncbitk.objmgr.Scope",
     blocksize: int,
     width: int = 80,
-) -> None:
+) -> List[SeqLoc]:
     """Chop a single record into blocks and write it to ``dest``.
 
     Arguments:
@@ -140,40 +159,46 @@ def _chop(
         blocksize (`int`): The size of block, in nucleotides.
 
     """
+
+    chops = []
+
     if hasattr(record, "id") and hasattr(record, "seq"):
         record = [record]
-    with open(fspath(dest), mode="w") as d:
-        for r in record:
-            for i, block in enumerate(BlockIterator(r, blocksize)):
-                # skip blocks with more than 80% unknown nucleotides
-                n_count = block.seq.count("N") + block.seq.count("n")
-                if n_count / len(block) >= 0.8:
-                    continue
-                # write FASTA with 80 characters per line
-                d.write(">{}_{}\n".format(r.id, i))
-                for j in range(0, len(block), width):
-                    d.write(str(block.seq[j:j+width]).upper())
-                    d.write("\n")
+
+    for r in record:
+        # create sequence for the whole record
+        seq = _make_bioseq(r)
+        scope.add_bioseq(seq)
+        # chop in blocks
+        for i, block in enumerate(BlockIterator(r, blocksize)):
+            # skip blocks with more than 80% unknown nucleotides
+            n_count = block.seq.count("N") + block.seq.count("n")
+            if n_count / len(block) >= 0.8:
+                continue
+            # create a biosequence for the block
+            block_seq = BioSeq(
+                ContinuousInst(IupacNaData(bytes(block.seq.upper()))),
+                LocalId(ObjectId(f"{r.id}_{i}"))
+            )
+            # add block biosequence to scope
+            scope.add_bioseq(block_seq)
+            chops.append(WholeSeqLoc(block_seq.id))
+
+    return chops
 
 
 def _hits(
-    query: "PathLike[str]",
-    reference: "PathLike[str]",
+    query: "Sequence[SeqLoc]",
+    reference: "Sequence[SeqLoc]",
     blocksize: int,
     threads: int,
+    scope: pyncbitk.objmgr.Scope,
     seqids: "Optional[List[str]]" = None,
     min_length: int = 357,
 ) -> List[BlastRow]:
     """Compute the hits from ``query`` to ``reference``."""
 
-    import pyncbitk.algo
-    from pyncbitk.objects.seqset import BioSeqSet
-    from pyncbitk.objtools import DatabaseReader, FastaReader
-    from pyncbitk.algo import SearchQuery, SearchQueryVector
-    from pyncbitk.objects.seqloc import WholeSeqLoc
-
-    manager = pyncbitk.objmgr.ObjectManager()
-
+    # initialize blast
     blastn = pyncbitk.algo.BlastN(
         evalue=1e-15,
         xdrop_gap=150,
@@ -183,33 +208,21 @@ def _hits(
         max_target_sequences=1,
     )
 
-    with manager.scope() as scope:
-        query_ids = []
-        target_ids = []
+    # convert seqloc to SearchQuery with the given scope
+    query_sq = SearchQueryVector(( SearchQuery(q, scope) for q in query ))
+    ref_sq = SearchQueryVector(( SearchQuery(r, scope) for r in reference ))
 
-        for seq in FastaReader(query):
-            scope.add_bioseq(seq)
-            query_ids.append(SearchQuery(WholeSeqLoc(seq.id), scope))
+    # run BLASTn
+    results = blastn.run(query_sq, ref_sq, scan_mode=True)
 
-        for seq in FastaReader(reference):
-            scope.add_bioseq(seq)
-            target_ids.append(SearchQuery(WholeSeqLoc(seq.id), scope))
-
-        # query_db = BioSeqSet(, split=False))
-        # ref_db = BioSeqSet(FastaReader(reference, split=False))
-        results = blastn.run(
-            SearchQueryVector(query_ids),
-            SearchQueryVector(target_ids),
-            scan_mode=True
-        )
-
+    # collect results
     rows = []
     for result in results:
         best = next(iter(result.alignments), None)
         if best is not None and best.alignment_length >= 0.35 * blocksize:
             rows.append(
                 BlastRow(
-                    query=result.query_id.object_id.value,
+                    query=best[0].id.object_id.value,
                     target=best[1].id.object_id.value,
                     alignment_length=best.alignment_length,
                     evalue=best.evalue,
@@ -222,7 +235,11 @@ def _hits(
     return rows
 
 def _orthoani(
-    query: "PathLike[str]", reference: "PathLike[str]", blocksize: int, threads: int
+    query: "Sequence[SeqLoc]",
+    reference: "Sequence[SeqLoc]",
+    blocksize: int,
+    threads: int,
+    scope: pyncbitk.objmgr.Scope,
 ) -> float:
     """Compute the OrthoANI score for two chopped sequences.
 
@@ -242,7 +259,8 @@ def _orthoani(
         query,
         reference,
         blocksize=blocksize,
-        threads=threads
+        threads=threads,
+        scope=scope,
     )
 
     # compute forward hits: only sequences that got a forward hit are used
@@ -251,6 +269,7 @@ def _orthoani(
         query,
         blocksize=blocksize,
         threads=threads,
+        scope=scope,
     )
 
     # listMerge
@@ -298,17 +317,14 @@ def orthoani(
         BLAST but bear no semantic value.
 
     """
-    with ExitStack() as ctx:
+    with pyncbitk.objmgr.ObjectManager().scope() as scope:
         # make the chopped file and the database for the first sequence
-        chopped_r = ctx << temppath(suffix=".fa")
-        _chop(reference, chopped_r, blocksize=blocksize)
-        # ctx << _database(chopped_r)
+        chopped_r = _chop(reference, blocksize=blocksize, scope=scope)
         # make the chopped file and the database for the first sequence
-        chopped_q = ctx << temppath(suffix=".fa")
-        _chop(query, chopped_q, blocksize=blocksize)
-        # ctx << _database(chopped_q)
+        # chopped_q = ctx << temppath(suffix=".fa")
+        chopped_q = _chop(query, blocksize=blocksize, scope=scope)
         # return the orthoani score
-        ani = _orthoani(chopped_q, chopped_r, blocksize, threads)
+        ani = _orthoani(chopped_q, chopped_r, blocksize, threads, scope=scope)
     return ani
 
 
@@ -334,19 +350,18 @@ def orthoani_pairwise(
         record identifiers.
 
     """
-    with ExitStack() as ctx:
+    with pyncbitk.objmgr.ObjectManager().scope() as scope:
+    # with ExitStack() as ctx:
         # chop all inputs and make databases to avoid redoing it for each pair
         chopped = {}
         for genome in genomes:
-            chopped[genome.id] = ctx << temppath(suffix=".fa")
-            _chop(genome, chopped[genome.id], blocksize=blocksize)
-            # ctx << _database(chopped[genome.id])
+            chopped[genome.id] = _chop(genome, blocksize=blocksize, scope=scope)
         # query the results for each pair (using symmetricity)
         results = {}
         for i, g1 in enumerate(genomes):
             results[g1.id, g1.id] = 1.0
             for g2 in genomes[i + 1 :]:
-                ani = _orthoani(chopped[g1.id], chopped[g2.id], blocksize, threads)
+                ani = _orthoani(chopped[g1.id], chopped[g2.id], blocksize, threads, scope=scope)
                 results[g1.id, g2.id] = results[g2.id, g1.id] = ani
     # return the orthoani score for each pair
     return results
