@@ -40,7 +40,7 @@ def argument_parser() -> argparse.ArgumentParser:
         "-j",
         "--jobs",
         help="the number of threads to use for BLASTn",
-        default=os.cpu_count(),
+        default=1,
         type=int,
     )
     parser.add_argument(

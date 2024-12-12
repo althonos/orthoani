@@ -214,6 +214,11 @@ def _hits(
 ) -> List[BlastRow]:
     """Compute the hits from ``query`` to ``reference``."""
 
+    if threads > len(query):
+        threads = len(query)
+    if threads == 0:
+        threads = os.cpu_count() or 1
+
     # initialize blast
     blastn = pyncbitk.algo.BlastN(
         evalue=1e-15,
