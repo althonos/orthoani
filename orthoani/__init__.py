@@ -5,6 +5,8 @@ import collections
 import contextlib
 import decimal
 import io
+import itertools
+import math
 import os
 import shlex
 import subprocess
@@ -13,18 +15,25 @@ from os import PathLike, fspath
 from subprocess import PIPE, DEVNULL
 from typing import Dict, List, Iterator, Iterable, Tuple, Union, Sequence
 
+try:
+    from multiprocessing.pool import ThreadPool
+except ImportError:
+    ThreadPool = None
+
+
 import pyncbitk.algo
 import pyncbitk.objmgr
 from pyncbitk.algo import SearchQuery, SearchQueryVector
 from pyncbitk.objects.general import ObjectId
 from pyncbitk.objects.seqdata import IupacNaData
-from pyncbitk.objects.seqinst import ContinuousInst
-from pyncbitk.objects.seqloc import SeqId, LocalId, SeqLoc, SeqIntervalLoc, WholeSeqLoc
+from pyncbitk.objects.seqinst import ContinuousInst, RefInst
+from pyncbitk.objects.seqid import SeqId, LocalId
+from pyncbitk.objects.seqloc import SeqLoc, SeqIntervalLoc, WholeSeqLoc
 from pyncbitk.objects.seq import BioSeq
 from pyncbitk.objects.seqset import BioSeqSet
 from pyncbitk.objtools import DatabaseReader, FastaReader
 
-from ._utils import ExitStack, BlockIterator, temppath
+from ._utils import ExitStack, ChunkIterator, temppath
 
 if typing.TYPE_CHECKING:
     from Bio.SeqRecord import SeqRecord
@@ -138,8 +147,7 @@ def _make_bioseq(
     record: "SeqRecord",
 ) -> "pyncbitk.objects.BioSeq":
     return BioSeq(
-        ContinuousInst(IupacNaData(bytes(record.seq.upper()))),
-        # SeqId.parse(record.id),
+        ContinuousInst(IupacNaData(bytes(record.seq))),
         LocalId(ObjectId(record.id)),
     )
 
@@ -166,22 +174,30 @@ def _chop(
         record = [record]
 
     for r in record:
-        # create sequence for the whole record
+        # ensure sequence is uppercase
+        if not r.seq.isupper():
+            r.seq = r.seq.upper()
+
+        # create BioSeq for the whole record
         seq = _make_bioseq(r)
         scope.add_bioseq(seq)
+
         # chop in blocks
-        for i, block in enumerate(BlockIterator(r, blocksize)):
+        for i, (start, end) in enumerate(ChunkIterator(len(r), blocksize)):
             # skip blocks with more than 80% unknown nucleotides
-            n_count = block.seq.count("N") + block.seq.count("n")
-            if n_count / len(block) >= 0.8:
+            n_count = r.seq.count("N", start=start, end=end)
+            if n_count / blocksize >= 0.8:
                 continue
-            # create a biosequence for the block
+            # create a biosequence for the block referencing the 
+            # NOTE: Not setting `length=blocksize` changes results, need
+            #       to check what is happening upstream in PyNCBItk
             block_seq = BioSeq(
-                ContinuousInst(IupacNaData(bytes(block.seq.upper()))),
+                RefInst(SeqIntervalLoc(seq.id,  start, end), length=blocksize),
                 LocalId(ObjectId(f"{r.id}_{i}"))
             )
-            # add block biosequence to scope
+            # add block biosequence to the scope
             scope.add_bioseq(block_seq)
+            # create a location for the block
             chops.append(WholeSeqLoc(block_seq.id))
 
     return chops
@@ -209,29 +225,39 @@ def _hits(
     )
 
     # convert seqloc to SearchQuery with the given scope
-    query_sq = SearchQueryVector(( SearchQuery(q, scope) for q in query ))
+    # query_sq = SearchQueryVector(( SearchQuery(q, scope) for q in query ))
     ref_sq = SearchQueryVector(( SearchQuery(r, scope) for r in reference ))
 
-    # run BLASTn
-    results = blastn.run(query_sq, ref_sq, scan_mode=True)
+    queries_chunks = []
+    chunksize = math.ceil(len(query) / threads)
+    for n, i in enumerate(range(0, len(query), chunksize)):
+        queries_chunks.append(SearchQueryVector((SearchQuery(q, scope) for q in query[i : i + chunksize])))
 
-    # collect results
-    rows = []
-    for result in results:
-        best = next(iter(result.alignments), None)
-        if best is not None and best.alignment_length >= 0.35 * blocksize:
-            rows.append(
-                BlastRow(
-                    query=best[0].id.object_id.value,
-                    target=best[1].id.object_id.value,
-                    alignment_length=best.alignment_length,
-                    evalue=best.evalue,
-                    bitscore=best.bitscore,
-                    # NOTE: rounding to preserve same results as original OrthoANI,
-                    # which uses BLAST outfmt 7 tables, which round identity
-                    identity=round(best.percent_identity, 3),
+    def run(q):
+        rows = []
+        for result in blastn.run(q, ref_sq, pairwise=False):
+            best = next(iter(result.alignments), None)
+            if best is not None and best.alignment_length >= 0.35 * blocksize:
+                rows.append(
+                    BlastRow(
+                        query=best[0].id.object_id.value,
+                        target=best[1].id.object_id.value,
+                        alignment_length=best.alignment_length,
+                        evalue=best.evalue,
+                        bitscore=best.bitscore,
+                        # NOTE: rounding to preserve same results as original OrthoANI,
+                        # which uses BLAST outfmt 7 tables, which round identity
+                        identity=round(best.percent_identity, 3),
+                    )
                 )
-            )
+        return rows
+
+    if threads != 1 and ThreadPool is not None:
+        with ThreadPool(threads) as pool:
+            rows = list(itertools.chain.from_iterable(pool.map(run, queries_chunks)))
+    else:
+        rows = list(itertools.chain.from_iterable(map(run, queries_chunks)))
+
     return rows
 
 def _orthoani(

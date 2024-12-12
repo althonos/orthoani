@@ -3,7 +3,7 @@
 
 import contextlib
 import tempfile
-from typing import Any, ContextManager, Generic, Iterator, Sequence, TypeVar
+from typing import Any, ContextManager, Generic, Iterator, Sequence, TypeVar, Tuple
 
 from pathlib import Path
 from typing import Iterator
@@ -25,30 +25,30 @@ class ExitStack(contextlib.ExitStack):
         return self.enter_context(r)
 
 
-class BlockIterator(Generic[_S], Iterator[_S]):
-    """An iterator that yields even-sized blocks from a sliceable input.
+class ChunkIterator(Iterator[Tuple[int, int]]):
+    """An iterator that yields even-sized block coordinates.
 
     Example:
-        >>> for x in BlockIterator("abcde", 2):
+        >>> for x in ChunkIterator("abcde", 2):
         ...     print(x)
-        ab
-        cd
+        (0, 2)
+        (2, 4)
 
     """
 
-    def __init__(self, data: _S, blocksize: int):  # noqa: D105, D107
-        self.data = data
+    def __init__(self, length: int, blocksize: int):  # noqa: D105, D107
+        self.length = length
         self.blocksize = blocksize
         self.cursor = 0
 
-    def __iter__(self) -> "BlockIterator[_S]":  # noqa: D105
+    def __iter__(self) -> "ChunkIterator":  # noqa: D105
         return self
 
     def __next__(self) -> _S:  # noqa: D105
-        if self.cursor + self.blocksize < len(self.data):
-            block = self.data[self.cursor : self.cursor + self.blocksize]
+        if self.cursor + self.blocksize < self.length:
+            block = (self.cursor, self.cursor + self.blocksize)
             self.cursor += self.blocksize
-            return block  # type: ignore
+            return block
         raise StopIteration
 
 
