@@ -1,4 +1,4 @@
-# (Py)OrthoANI [![Stars](https://img.shields.io/github/stars/althonos/orthoani.svg?style=social&maxAge=3600&label=Star)](https://github.com/althonos/orthoani/stargazers)
+# PyOrthoANI [![Stars](https://img.shields.io/github/stars/althonos/orthoani.svg?style=social&maxAge=3600&label=Star)](https://github.com/althonos/orthoani/stargazers)
 
 *A Python implementation of the [OrthoANI](https://doi.org/10.1099/ijsem.0.000760) algorithm for nucleotide identity measurement.*
 
@@ -26,7 +26,7 @@ considering alignments of reciprocal orthologs.
 
 ![Algorithm](https://www.microbiologyresearch.org/docserver/fulltext/ijsem/66/2/000760-f1.gif)
 
-This project is a reimplementation of the closed-source Java implementation
+PyOrthoANI is a reimplementation of the closed-source Java implementation
 provided by the authors on [`ezbiocloud.net`](https://www.ezbiocloud.net/sw/oat).
 It relies on [Biopython](https://biopython.org/) to handle the I/O, and calls
 the BLAST+ binaries using the `subprocess` module of the Python standard 
@@ -82,6 +82,17 @@ is actually located on physical storage.
 Values computed by this package and the original Java implementation may differ
 slightly because in Java the authors perform rounding of floating-point values
 at the sub-percent level, while this library uses the full values.
+
+
+## 🔖 Citation
+
+PyOrthoANI is scientific software; it is submitted for publication
+and is currently available as a [pre-print on bioRxiv](https://www.biorxiv.org/content/10.1101/2025.02.13.638148v1).
+Please cite both [PyOrthoANI](https://www.biorxiv.org/content/10.1101/2025.02.13.638148v1)
+and [OrthoANI](https://pubmed.ncbi.nlm.nih.gov/26585518/) if you are using it in an academic work,
+for instance as:
+
+> PyOrthoANI (Larralde *et al.*, 2024), a Python implementation of OrthoANI (Lee *et al.*, 2016).
 
 
 ## 📜 About
