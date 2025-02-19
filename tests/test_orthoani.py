@@ -58,7 +58,7 @@ class TestChop(unittest.TestCase):
             expected = list(parse(f, "fasta"))
         with tempfile.NamedTemporaryFile(mode="rt", suffix=".fna") as tmp:
             orthoani._chop(record, tmp.name, 1020)
-            actual = list(parse(tmp, "fasta"))
+            actual = list(parse(tmp.file, "fasta"))
         for actual_record, expected_record in zip(actual, expected):
             self.assertEqual(actual_record.seq, expected_record.seq)
 
@@ -69,6 +69,6 @@ class TestChop(unittest.TestCase):
             expected = list(parse(f, "fasta"))
         with tempfile.NamedTemporaryFile(mode="rt", suffix=".fna") as tmp:
             orthoani._chop(record, tmp.name, 1020)
-            actual = list(parse(tmp, "fasta"))
+            actual = list(parse(tmp.file, "fasta"))
         for actual_record, expected_record in zip(actual, expected):
             self.assertEqual(actual_record.seq, expected_record.seq)
