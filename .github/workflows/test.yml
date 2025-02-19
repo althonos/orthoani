@@ -14,9 +14,6 @@ jobs:
     strategy:
       matrix:
         include:
-        - python-version: 3.7
-          python-release: v3.7
-          python-impl: CPython
         - python-version: 3.8
           python-release: v3.8
           python-impl: CPython
@@ -35,9 +32,6 @@ jobs:
         - python-version: 3.13
           python-release: v3.13
           python-impl: CPython
-        - python-version: pypy-3.7
-          python-release: v3.7
-          python-impl: PyPy
         - python-version: pypy-3.8
           python-release: v3.8
           python-impl: PyPy
@@ -61,7 +55,7 @@ jobs:
     - name: Install CI requirements
       run: python -m pip install coverage
     - name: Install library
-      run: pip install .
+      run: pip install --no-build-isolation -e .
     - name: Test with coverage
       run: python -m coverage run --source=orthoani -m unittest discover -v
     - name: Convert coverage report
