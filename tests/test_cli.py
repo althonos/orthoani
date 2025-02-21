@@ -10,7 +10,7 @@ from os import fspath
 
 from Bio.SeqIO import read
 
-import orthoani._main
+import pyorthoani._main
 
 
 class TestCli(unittest.TestCase):
@@ -32,7 +32,7 @@ class TestCli(unittest.TestCase):
         self._stderr_mock.__exit__(None, None, None)
 
     def shell(self, args):
-        return orthoani._main.main(args)
+        return pyorthoani._main.main(args)
 
     def test_orthoani_cli(self):
         # check the score we get is the same as the OrthoANI Java implementation
