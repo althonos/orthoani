@@ -22,7 +22,7 @@ if typing.TYPE_CHECKING:
 __all__ = ["orthoani", "orthoani_pairwise"]
 __author__ = "Martin Larralde <martin.larralde@embl.de>"
 __license__ = "MIT"
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 
 class BlastRow(typing.NamedTuple):
