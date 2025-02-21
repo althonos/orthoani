@@ -20,9 +20,9 @@ from . import orthoani, __name__, __version__
 
 def argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="orthoani",
+        prog="pyorthoani",
         description="Compute OrthoANI between two sequences in FASTA format.",
-        epilog="Full documentation <https://github.com/althonos/orthoani>",
+        epilog="Full documentation <https://github.com/althonos/pyorthoani>",
     )
     parser.add_argument(
         "-T",

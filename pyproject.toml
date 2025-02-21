@@ -40,6 +40,7 @@ cli = [
 "CI" = "https://github.com/althonos/pyorthoani/actions"
 
 [project.scripts]
+orthoani = "orthoani._main:main"
 pyorthoani = "pyorthoani._main:main"
 
 [tool.setuptools.packages.find]
