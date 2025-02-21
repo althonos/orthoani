@@ -2,18 +2,18 @@
 
 *A Python implementation of the [OrthoANI](https://doi.org/10.1099/ijsem.0.000760) algorithm for nucleotide identity measurement.*
 
-[![Actions](https://img.shields.io/github/actions/workflow/status/althonos/orthoani/test.yml?branch=main&logo=github&style=flat-square&maxAge=300)](https://github.com/althonos/orthoani/actions)
+[![Actions](https://img.shields.io/github/actions/workflow/status/althonos/pyorthoani/test.yml?branch=main&logo=github&style=flat-square&maxAge=300)](https://github.com/althonos/pyorthoani/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&maxAge=2678400)](https://choosealicense.com/licenses/mit/)
-[![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/orthoani/)
-[![Coverage](https://img.shields.io/codecov/c/gh/althonos/orthoani?style=flat-square&maxAge=3600)](https://codecov.io/gh/althonos/orthoani/)
-[![PyPI](https://img.shields.io/pypi/v/orthoani.svg?style=flat-square&maxAge=600)](https://pypi.org/project/orthoani)
-[![Wheel](https://img.shields.io/pypi/wheel/orthoani.svg?style=flat-square&maxAge=3600)](https://pypi.org/project/orthoani/#files)
-[![Python Versions](https://img.shields.io/pypi/pyversions/orthoani.svg?style=flat-square&maxAge=600)](https://pypi.org/project/orthoani/#files)
-[![Python Implementations](https://img.shields.io/pypi/implementation/orthoani.svg?style=flat-square&maxAge=600)](https://pypi.org/project/orthoani/#files)
-[![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/orthoani/)
-[![GitHub issues](https://img.shields.io/github/issues/althonos/orthoani.svg?style=flat-square&maxAge=600)](https://github.com/althonos/orthoani/issues)
-[![Changelog](https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/orthoani/blob/master/CHANGELOG.md)
-[![Downloads](https://img.shields.io/pypi/dm/orthoani?style=flat-square&color=303f9f&maxAge=86400&label=downloads)](https://pepy.tech/project/orthoani)
+[![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/pyorthoani/)
+[![Coverage](https://img.shields.io/codecov/c/gh/althonos/pyorthoani?style=flat-square&maxAge=3600)](https://codecov.io/gh/althonos/pyorthoani/)
+[![PyPI](https://img.shields.io/pypi/v/pyorthoani.svg?style=flat-square&maxAge=600)](https://pypi.org/project/pyorthoani)
+[![Wheel](https://img.shields.io/pypi/wheel/pyorthoani.svg?style=flat-square&maxAge=3600)](https://pypi.org/project/pyorthoani/#files)
+[![Python Versions](https://img.shields.io/pypi/pyversions/pyorthoani.svg?style=flat-square&maxAge=600)](https://pypi.org/project/pyorthoani/#files)
+[![Python Implementations](https://img.shields.io/pypi/implementation/pyorthoani.svg?style=flat-square&maxAge=600)](https://pypi.org/project/pyorthoani/#files)
+[![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/pyorthoani/)
+[![GitHub issues](https://img.shields.io/github/issues/althonos/pyorthoani.svg?style=flat-square&maxAge=600)](https://github.com/althonos/pyorthoani/issues)
+[![Changelog](https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/pyorthoani/blob/master/CHANGELOG.md)
+[![Downloads](https://img.shields.io/pypi/dm/pyorthoani?style=flat-square&color=303f9f&maxAge=86400&label=downloads)](https://pepy.tech/project/pyorthoani)
 
 
 ## 🗺️ Overview
