@@ -37,10 +37,10 @@ library.
 
 Installing with `pip` is the easiest:
 ```console
-$ pip install orthoani
+$ pip install pyorthoani
 ```
 
-`orthoani` also requires the BLAST+ binaries to be installed on your machine
+PyOrthoANI also requires the BLAST+ binaries to be installed on your machine
 and available somewhere in your `$PATH`.
 
 
@@ -49,19 +49,19 @@ and available somewhere in your `$PATH`.
 Use Biopython to load two FASTA files, and then `orthoani.orthoani` to compute
 the OrthoANI metric between them:
 ```python
-import orthoani
+import pyorthoani
 from Bio.SeqIO import read
 
 genome_1 = read("sequence1.fa", "fasta")
 genome_2 = read("sequence2.fa", "fasta")
 
-ani = orthoani.orthoani(genome_1, genome_2)
+ani = pyorthoani.orthoani(genome_1, genome_2)
 ```
 
-`orthoani` can also be used from the CLI using a very simple command-line
-interface:
+`pyorthoani` can also be used from the CLI using a very simple command-line
+interface mimicking the original Java tool:
 ```console
-$ orthoani -q sequence1.fa -r sequence2.fa
+$ pyorthoani -q sequence1.fa -r sequence2.fa
 57.25
 ```
 
@@ -109,3 +109,4 @@ the [Zeller team](https://github.com/zellerlab).*
 ## 📚 References
 
 - <a id="ref1">\[1\]</a> Imchang Lee, Yeong Ouk Kim, Sang-Cheol Park and Jongsik Chun. *OrthoANI: An improved algorithm and software for calculating average nucleotide identity* (2016). International Journal of Systematic and Evolutionary Microbiology. [doi:10.1099/ijsem.0.000760](https://doi.org/10.1099/ijsem.0.000760). [PMID:26585518](https://pubmed.ncbi.nlm.nih.gov/26585518/).
+
