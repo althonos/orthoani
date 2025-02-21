@@ -42,8 +42,9 @@ cli = [
 [project.scripts]
 pyorthoani = "pyorthoani._main:main"
 
-[tool.setuptools.packages]
-find = {namespaces = false}
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
 
 [tool.setuptools.dynamic]
 version = {attr = "pyorthoani.__version__"}
