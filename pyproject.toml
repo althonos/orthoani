@@ -3,7 +3,7 @@ requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "orthoani"
+name = "pyorthoani"
 dynamic = ["version"]
 description = "A Python implementation of the OrthoANI algorithm for nucleotide identity measurement."
 readme = "README.md"
@@ -35,21 +35,21 @@ cli = [
 ]
 
 [project.urls]
-"Bug Tracker" = "https://github.com/althonos/orthoani/issues"
-"Changelog" = "https://github.com/althonos/orthoani/blob/master/CHANGELOG.md"
-"CI" = "https://github.com/althonos/orthoani/actions"
+"Bug Tracker" = "https://github.com/althonos/pyorthoani/issues"
+"Changelog" = "https://github.com/althonos/pyorthoani/blob/master/CHANGELOG.md"
+"CI" = "https://github.com/althonos/pyorthoani/actions"
 
 [project.scripts]
-orthoani = "orthoani._main:main"
+pyorthoani = "pyorthoani._main:main"
 
 [tool.setuptools.packages]
 find = {namespaces = false}
 
 [tool.setuptools.dynamic]
-version = {attr = "orthoani.__version__"}
+version = {attr = "pyorthoani.__version__"}
 
 [tool.coverage.report]
-include = ["orthoani/*.py"]
+include = ["pyorthoani/*.py"]
 omit = ["tests/*"]
 show_missing = true
 exclude_lines = [
@@ -64,7 +64,7 @@ exclude_lines = [
 
 [tool.coverage.run]
 branch = true
-source = ["orthoani"]
+source = ["pyorthoani"]
 
 [tool.pydocstyle]
 inherit = false
