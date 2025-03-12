@@ -1,0 +1,74 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: PyOrthoANI
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Martin
+    family-names: Larralde
+    email: martin.larralde@embl.de
+    affiliation: Leiden University Medical Center
+    orcid: 'https://orcid.org/0000-0002-3947-4444'
+  - given-names: Georg
+    family-names: Zeller
+    affiliation: Leiden University Medical Center
+    orcid: 'https://orcid.org/0000-0003-1429-7485'
+  - given-names: Laura
+    name-particle: M.
+    family-names: Carroll
+    affiliation: Umeå University
+    orcid: 'https://orcid.org/0000-0002-3677-0192'
+identifiers:
+  - type: doi
+    value: 10.1101/2025.02.13.638148
+    description: bioRxiv preprint
+repository-code: 'https://github.com/althonos/pyorthoani'
+abstract: >-
+  The average nucleotide identity (ANI) metric has become
+  the gold standard for prokaryotic species delineation in
+  the genomics era. The most popular ANI algorithms are
+  available as command-line tools and/or web applications,
+  making it inconvenient or impossible to incorporate them
+  into bioinformatic workflows, which utilize the popular
+  Python programming language. Here, we present PyOrthoANI,
+  PyFastANI, and Pyskani, Python libraries for three popular
+  ANI computation methods. ANI values produced by
+  PyOrthoANI, PyFastANI, and Pyskani are virtually identical
+  to those produced by OrthoANI, FastANI, and skani,
+  respectively. All three libraries integrate seamlessly
+  with BioPython, making it easy and convenient to use,
+  compare, and benchmark popular ANI algorithms within
+  Python-based workflows.
+keywords:
+  - python
+  - library
+  - average nucleotide identity
+  - ANI
+license: MIT
+preferred-citation:
+  type: article
+  status: preprint
+  authors:
+  - given-names: Martin
+    family-names: Larralde
+    email: martin.larralde@embl.de
+    affiliation: Leiden University Medical Center
+    orcid: 'https://orcid.org/0000-0002-3947-4444'
+  - given-names: Georg
+    family-names: Zeller
+    affiliation: Leiden University Medical Center
+    orcid: 'https://orcid.org/0000-0003-1429-7485'
+  - given-names: Laura
+    name-particle: M.
+    family-names: Carroll
+    affiliation: Umeå University
+    orcid: 'https://orcid.org/0000-0002-3677-0192'
+  doi: "10.1101/2025.02.13.638148"
+  journal: "bioRxiv"
+  month: 2
+  title: "PyOrthoANI, PyFastANI, and Pyskani: a suite of Python libraries for computation of average nucleotide identity"
+  year: 2025
