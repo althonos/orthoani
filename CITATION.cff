@@ -26,6 +26,9 @@ identifiers:
   - type: doi
     value: 10.1101/2025.02.13.638148
     description: bioRxiv preprint
+  - type: doi
+    value: 10.1093/nargab/lqaf095
+    description: NAR Genomics & Bioinformatics paper
 repository-code: 'https://github.com/althonos/pyorthoani'
 abstract: >-
   The average nucleotide identity (ANI) metric has become
@@ -51,7 +54,6 @@ keywords:
 license: MIT
 preferred-citation:
   type: article
-  status: preprint
   authors:
   - given-names: Martin
     family-names: Larralde
@@ -67,8 +69,10 @@ preferred-citation:
     family-names: Carroll
     affiliation: Umeå University
     orcid: 'https://orcid.org/0000-0002-3677-0192'
-  doi: "10.1101/2025.02.13.638148"
-  journal: "bioRxiv"
-  month: 2
+  doi: "10.1093/nargab/lqaf095"
+  journal: "NAR Genomics and Bioinformatics"
+  volume: 7
+  issue: 3
   title: "PyOrthoANI, PyFastANI, and Pyskani: a suite of Python libraries for computation of average nucleotide identity"
   year: 2025
+  month: 9
